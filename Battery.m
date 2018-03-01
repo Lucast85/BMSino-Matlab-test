@@ -76,6 +76,7 @@ classdef Battery < handle % handle class
        function getVoltages(obj)
             fprintf(obj.SerialObj, 'mVCELL A');
             obj.CellsVoltages = cell2mat(textscan(fscanf(obj.SerialObj),'%f'));
+			obj.TotalVoltage = sum(obj.CellsVoltages);										  
        end
        % Get Temperatures
        function getTemperatures(obj)
@@ -89,7 +90,7 @@ classdef Battery < handle % handle class
        end
        % Get Balancing Status
        function getBalancingStatus(obj)
-           fprintf(obj.SerialObj, 'RBCELL ');
+           fprintf(obj.SerialObj, 'RBCELL');
            obj.CellsBalancingStatus = string2binarray(fscanf((obj.SerialObj),'%s'));
        end
        % Set Balancing Status
