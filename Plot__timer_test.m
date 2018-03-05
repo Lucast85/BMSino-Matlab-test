@@ -1,7 +1,7 @@
 clear all
 clc
 
-%% Figure code
+%% Figure
 figure
 ax = gca;
 ax.YGrid = 'on';
@@ -10,7 +10,7 @@ ax.XLabel.String = 'Time';
 yyaxis left
 ax.YLabel.String = 'YLabel left';
 yyaxis right
-ax.YLabel.String = 'ylabel right'
+ax.YLabel.String = 'ylabel right';
 
 % define the handles of the animated lines to plot data in real time
 hAnimLinesV.CellVoltage1 = animatedline;
@@ -64,7 +64,7 @@ function T1_trig_Fcn(obj, event, hAnimLinesV, hAnimLinesT, hAnimLinesC )
     addpoints(hAnimLinesT.CellTemperature1,time,y3)
     addpoints(hAnimLinesC.BatteryCurrent,time,y4)
     % Update axes
-    %ax.XLim = time-10; % sembra non funzionare
+    ax.XLim = time-50; % sembra non funzionare
     drawnow
     
 end
