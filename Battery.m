@@ -10,7 +10,7 @@ classdef Battery < handle % handle class
       MaxCellVoltage                = 4200  % mV
       MinCellVoltage                = 2500  % mV
       CellVoltageStartSPChReduction = 4000  % mV
-      DeltaVoltageEndOfBalancing    = 20    % mV
+      DeltaVoltageEndOfBalancing    = 30    % mV
       Manufacturer                  = 'Panasonic'
       PartNumber                    = 'NCR18650B'
       Note = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
