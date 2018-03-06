@@ -7,16 +7,16 @@ function [ChSetPoint] = SetPoint_Estimation(Battery, HighestCellVoltage)
     DeltaVoltageMax = 0;
     ChSetPoint=0;
     % Con la tensione di cella scalo il SetPoint di carica (corrente)
-    DeltaVoltage = (HighestCellVoltage - Battery.CellVoltageStartSPChReduction);
-    DeltaVoltageMax = (Battery.MaxCellVoltage - Battery.CellVoltageStartSPChReduction);
+    DeltaVoltage = (HighestCellVoltage - Battery.CELL_VOLTAGE_START_SP_CH_REDUCTION);
+    DeltaVoltageMax = (Battery.MAX_CELL_VOLTAGE - Battery.CELL_VOLTAGE_START_SP_CH_REDUCTION);
     if (DeltaVoltage > 0)
         if (DeltaVoltage <= DeltaVoltageMax)
-            ChSetPoint = (100 - (100*DeltaVoltage / DeltaVoltageMax)) * Battery.StdChCurrent;
+            ChSetPoint = (100 - (100*DeltaVoltage / DeltaVoltageMax)) * Battery.STD_CH_CURRENT;
         else
             ChSetPoint = 0;
         end
     else
-        ChSetPoint = Battery.StdChCurrent;
+        ChSetPoint = Battery.STD_CH_CURRENT;
     end
 end
 

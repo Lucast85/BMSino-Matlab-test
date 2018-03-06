@@ -2,18 +2,19 @@ classdef Battery < handle % handle class
    properties (Constant)
       S = 6
       P = 1
-      RatedCapacity                 = 3200  % mAh
-      NominalVoltage                = 3600  % mV
-      StdChCurrent                  = 1625  % mA
-      MaxDsCurrent                  = 3200  % mA       
-      CutOffCurrent                 = 65    % mA
-      MaxCellVoltage                = 4200  % mV
-      MinCellVoltage                = 2500  % mV
-      CellVoltageStartSPChReduction = 4000  % mV
-      DeltaVoltageEndOfBalancing    = 30    % mV
-      Manufacturer                  = 'Panasonic'
-      PartNumber                    = 'NCR18650B'
-      Note = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
+      RATED_CAPACITY                        = 3200  % mAh
+      NOMINAL_VOLTAGE                       = 3600  % mV
+      STD_CH_CURRENT                        = 1625  % mA
+      MAX_DS_CURRENT                        = 3200  % mA       
+      CUTOFF_CURRENT                        = 65    % mA
+      MAX_CELL_VOLTAGE                      = 4200  % mV
+      MIN_CELL_VOLTAGE                      = 2500  % mV
+      CELL_VOLTAGE_START_SP_CH_REDUCTION    = 4000  % mV
+      CELL_VOLTAGE_START_BALANCING          = 4050  % mV
+      DELTA_VOLTAGE_END_OF_BALANCING        = 30    % mV
+      MANUFACTURER                          = 'Panasonic'
+      PART_NUMBER                           = 'NCR18650B'
+      NOTE = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
    end
    
    properties 
@@ -24,7 +25,6 @@ classdef Battery < handle % handle class
       BMSTemperature                = 0
       TotalCurrent                  = 0
       TotalVoltage                  = 0
- 
    end
    
    properties (Access = private)

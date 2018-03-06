@@ -14,12 +14,13 @@ classdef test_setup
     properties 
         BMSino
         B3603
-        time = zeros(1,MAX_TEST_TIME);
-        BatteryCurrent = zeros(1,MAX_TEST_TIME);
-        CellVoltage = zeros(CELLS_NUMBER,MAX_TEST_TIME);
-        CellTemperatures = zeros(CELLS_NUMBER,MAX_TEST_TIME);
-        CellBalancingStatus = zeros(CELLS_NUMBER,MAX_TEST_TIME);
-        BMSTemperature = zeros(1,MAX_TEST_TIME);
+        time = zeros(1, test_setup.MAX_TEST_TIME);
+        BatteryCurrent = zeros(1, test_setup.MAX_TEST_TIME);
+        CellVoltage = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        BatteryVoltage=zeros(1, test_setup.MAX_TEST_TIME);
+        CellTemperatures = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        CellBalancingStatus = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        BMSTemperature = zeros(1, test_setup.MAX_TEST_TIME);
     end
     
     methods
