@@ -12,6 +12,9 @@ classdef Battery < handle % handle class
       CELL_VOLTAGE_START_SP_CH_REDUCTION    = 4000  % mV
       CELL_VOLTAGE_START_BALANCING          = 4050  % mV
       DELTA_VOLTAGE_END_OF_BALANCING        = 30    % mV
+      MAX_CELL_TEMPERATURE                  = 40    % °C
+      MIN_CELL_TEMPERATURE                  = 0     % °C
+      MAX_BMS_TEMPERATURE                   = 70    % °C
       MANUFACTURER                          = 'Panasonic'
       PART_NUMBER                           = 'NCR18650B'
       NOTE = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'

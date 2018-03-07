@@ -80,7 +80,7 @@ classdef DCDC < handle % handle class
             string = strcat('OUTPUT',32, int2str(sts));
             fprintf(obj.SerialObj, string);
             disp('Output set')
-            flushinput(obj.SerialObj);
+            flushinput(obj.SerialObj);0
        end
        % Set Autocommit
        function setAutocommit(obj)

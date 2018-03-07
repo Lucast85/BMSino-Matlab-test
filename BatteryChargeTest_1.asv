@@ -36,7 +36,6 @@ hAnimLinesT.BMSTemperature = animatedline;
 
 hAnimLinesC.BatteryCurrent = animatedline;
 
-
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 test_info=test_setup();
@@ -47,15 +46,23 @@ test_info=test_setup();
 t = timer('StartDelay', 5, 'Period', 1, 'TasksToExecute', inf, ...
           'ExecutionMode', 'fixedRate',...
           'StartFcn', @T1_Start_Fcn,...
-          'TimerFcn',{@T1_trig_Fcn, hAnimLinesV, hAnimLinesT, hAnimLinesC, test_info },...
+          'TickFcn',{@T1_Trig_Fcn, hAnimLinesV, hAnimLinesT, hAnimLinesC, test_info },...
           'StopFcn',@T1_Stop_Fcn,...
           'ErrorFcn',@T1_Err_Fcn);
       
 %% Timer trigger
-function T1_trig_Fcn(obj, event, hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_info)
+function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_info)
 % T1_trig_Fcn
-%     disp('in T1_trig_Fcn function')
+%     disp('in T1_Trig_Fcn function')
 %     disp(round(toc,1))
+
+    % Initialize errors
+    test_error.high_cell_voltage = NaN;
+    test_error.low_cell_voltage = NaN;
+    test_error.high_battery_current = NaN;
+    test_error.high_cell_temperature = NaN;
+    test_error.low_cell_temperature = NaN;
+    test_error.high_BMS_temperature = NaN;
    
     % static variable. t_idx is the number of times the trigger function is
     % called
@@ -66,32 +73,24 @@ function T1_trig_Fcn(obj, event, hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLin
     t_idx = t_idx + 1;
     
 %% STATE 1
-    % Save actual time
+% Save actual time
     test_info.time(t_idx) = toc;
         
 % Disable all balancing mosfets (it's mandatory to accurately measure the 
-    % cell's voltage)
-    % save old balancing status register before clear
-    persistent OldBalSts
-    if isempty(OldBalSts)
-        OldBalSts = 00000000;
-    end
-    OldBalSts = test_info.CellBalancingStatus;
-    % clear the balancing status register on BMSino
     test_info.BMSino.setBalancingStatus(00000000);
     
 % Measure cell temperatures
     test_info.BMSino.getTemperatures();
     test_info.Celltemperatures(:,t_idx) = test_info.BMSino.CellsTemperatures(:);
+    
+% Measure BMS temperature
+    test_info.BMSino.getTemperatures();
+    test_info.BMSTemperature(t_idx) = test_info.BMSino.BMSTemperature;
 
 % Measure battery current
     test_info.B3606.getStatus();
     test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
     % test_info.BMSino.getCurrent(); %does not work now!
-    
-% Measure BMS temperature
-    test_info.BMSino.getTemperatures();
-    test_info.BMSTemperature(t_idx) = test_info.BMSino.BMSTemperature;
     
 % Finally wait 50 ms, measure cell voltages and compute battery voltage
     pause(0.05);
@@ -99,92 +98,142 @@ function T1_trig_Fcn(obj, event, hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLin
     test_info.CellVoltage(:, t_idx) = test_info.BMSino.CellsVoltages(:);
     test_info.BatteryVoltage(t_idx) = test_info.BMSino.TotalVoltage;
     
-% Restore the balancing register to the previous value since it was cleared
-% to measure cells voltages.
-    test_info.BMSino.setBalancingStatus(OldBalSts);
+%% SECURITY CONTROL
+    % update error structure
+    if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_CELL_VOLTAGE)
+        test_error.high_cell_voltage = max(test_info.CellVoltage(:, t_idx));
+    end
+    if(min(test_info.CellVoltage(:, t_idx)) < test_info.BMSino.MIN_CELL_VOLTAGE)
+        test_error.low_cell_voltage = min(test_info.CellVoltage(:, t_idx));
+    end
+    if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.STD_CH_CURRENT)
+        test_error.high_battery_current = max(test_info.BatteryCurrent(t_idx));
+    end
+    if(max(test_info.CellTemperatures(:,t_idx)) > test_info.BMSino.MAX_CELL_TEMPERATURE)
+        test_error.high_cell_temperature = max(test_info.CellTemperatures(:,t_idx));
+    end
+    if(min(test_info.CellTemperatures(:,t_idx)) < test_info.BMSino.MIN_CELL_TEMPERATURE)
+        test_error.low_cell_temperature = min(test_info.CellTemperatures(:,t_idx));
+    end
+    if(max(BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
+        test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
+    end
 
-%% STATE 2
-% Estimate current charge setpoint
-    HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
-    ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
     
-%% STATE 3
-% switch on or off balancing mosfets
-    % compute balancing mask
-    toWriteCellBalancingStatus = zeros(test_info.CELLS_NUMBER);
-    for i=0:test_info.CELLS_NUMBER
-        if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
-            % it's time to balance the i-th cell!
-            toWriteCellBalancingStatus(i) = 1;
-        else
-            % switch off the balancing mosfet on i-th cell
-            toWriteCellBalancingStatus(i) = 0;
+    % check for errors. If not, execute the test.
+    if(isnan(test_error.high_cell_voltage) &&...
+        isnan(test_error.low_cell_voltage) &&...
+        isnan(test_error.high_battery_current) &&...
+        isnan(test_error.high_cell_temperature) &&...
+        isnan(test_error.low_cell_temperature) &&...
+        isnan(test_error.high_BMS_temperature))
+    %% STATE 2
+    % Compute & apply balancing mask
+        % compute balancing mask
+        toWriteCellBalancingStatus = zeros(test_info.CELLS_NUMBER);
+        for i=0:test_info.CELLS_NUMBER
+            if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
+                % it's time to balance the i-th cell!
+                toWriteCellBalancingStatus(i) = 1;
+            else
+                % switch off the balancing mosfet on i-th cell
+                toWriteCellBalancingStatus(i) = 0;
+            end
         end
+
+        % write balancing mask to BMSino
+        test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(i));
+
+    %% STATE 3
+    % Estimate current charge setpoint
+        HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
+        ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
+        fprintf('esitimated current set')
+
+    %% STATE 4
+        % check balancing status vector
+        test_info.CellBalancingStatus = test_info.BMSino.getBalancingStatus;
+        if test_info.CellBalancingStatus ~= toWriteCellBalancingStatus
+             disp('error during writing of balancing status register');
+        end
+
+    %% STATE 5
+    %  Apply the current setpoint already estimated
+        test_info.B3606.setCurrent(ChSetPoint);
+        test_info.B3606.setOutput(1);
+
+    else %actuate security features: stop all
+        % stop charge (open relay)
+        test_info.B3606.setOutput(0);
+        % stop balancing
+        test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
+        % Display error message!
+        if(test_error.high_cell_voltage)
+            fprintf('too high cell voltage (%1.3f)\n', test_error.high_cell_voltage)
+        end
+        if(test_error.low_cell_voltage)
+            fprintf('too low cell voltage (%1.3f)\n', test_error.low_cell_voltage)
+        end
+        if(test_error.high_battery_current)
+            fprintf('too high battery current (%1.3f)\n', test_error.high_battery_current)
+        end
+        if(test_error.high_cell_temperature)
+            fprintf('too high cell temperature (%3.1f)\n', test_error.high_cell_temperature)
+        end
+        if(test_error.low_cell_temperature)
+            fprintf('too low cell temperature (%3.1f)\n', test_error.low_cell_temperature)
+        end
+        if(test_error.high_BMS_temperature)
+            fprintf('too high BMS temperature (%3.1f)\n', test_error.high_BMS_temperature)
+        end 
     end
-    
-    % write balancing mask to BMSino
-    test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(i));
-    
-%% STATE 4
-    % check balancing status vector
-    test_info.CellBalancingStatus = test_info.BMSino.getBalancingStatus;
-    if test_info.CellBalancingStatus ~= toWriteCellBalancingStatus
-         disp('error during writing of balancing status register');
-    end
-    
-    
-%% STATE 5
-% Set the current setpoint already estimated
-    test_info.B3606.setCurrent(ChSetPoint);
-    
 %% STATE 6
-% plotta in real time tutti i valori su 2/3 grafici
+% plot all values in real-time
     
     % Plot in real time the cells values
+    % Cells voltage
     addpoints(hAnimLinesV.CellVoltage1, test_info.time(t_idx), test_info.CellVoltage(1,t_idx))
     addpoints(hAnimLinesV.CellVoltage2, test_info.time(t_idx), test_info.CellVoltage(2,t_idx))
     addpoints(hAnimLinesV.CellVoltage3, test_info.time(t_idx), test_info.CellVoltage(3,t_idx))
     addpoints(hAnimLinesV.CellVoltage4, test_info.time(t_idx), test_info.CellVoltage(4,t_idx))
     addpoints(hAnimLinesV.CellVoltage5, test_info.time(t_idx), test_info.CellVoltage(5,t_idx))
     addpoints(hAnimLinesV.CellVoltage6, test_info.time(t_idx), test_info.CellVoltage(6,t_idx))
-    
+    % Cells balancing status
     addpoints(hAnimLinesBS.CellBalSts1, test_info.time(t_idx), test_info.CellBalancingStatus(1,t_idx))
     addpoints(hAnimLinesBS.CellBalSts2, test_info.time(t_idx), test_info.CellBalancingStatus(2,t_idx))
     addpoints(hAnimLinesBS.CellBalSts3, test_info.time(t_idx), test_info.CellBalancingStatus(3,t_idx))
     addpoints(hAnimLinesBS.CellBalSts4, test_info.time(t_idx), test_info.CellBalancingStatus(4,t_idx))
     addpoints(hAnimLinesBS.CellBalSts5, test_info.time(t_idx), test_info.CellBalancingStatus(5,t_idx))
     addpoints(hAnimLinesBS.CellBalSts6, test_info.time(t_idx), test_info.CellBalancingStatus(6,t_idx))
-    
+    % Cells temperature
     addpoints(hAnimLinesT.CellTemperature1, test_info.time(t_idx), test_info.CellTemperature(1,t_idx))
     addpoints(hAnimLinesT.CellTemperature2, test_info.time(t_idx), test_info.CellTemperature(2,t_idx))
     addpoints(hAnimLinesT.CellTemperature3, test_info.time(t_idx), test_info.CellTemperature(3,t_idx))
     addpoints(hAnimLinesT.CellTemperature4, test_info.time(t_idx), test_info.CellTemperature(4,t_idx))
     addpoints(hAnimLinesT.CellTemperature5, test_info.time(t_idx), test_info.CellTemperature(5,t_idx))
     addpoints(hAnimLinesT.CellTemperature6, test_info.time(t_idx), test_info.CellTemperature(6,t_idx))
-    
+    % BMS temperature
     addpoints(hAnimLinesT.BMSTemperature, test_info.time(t_idx), test_info.BMSTemperature)
-    
+    % Battery current
     addpoints(hAnimLinesC.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent)
     
     % Update axes
-    ax.XLim = time-50; % sembra non funzionare
+    %ax.XLim = time-50; % sembra non funzionare
     drawnow
 end
 %% Timer Error
-function T1_Err_Fcn(obj, event, text_arg)
+function T1_Err_Fcn()
 % T1_Err_Fcn
     disp('in T1_Err_Fcn function')
 end
 %% Timer Start
-function T1_Start_Fcn(obj, event, text_arg)
+function T1_Start_Fcn()
 % T1_Start_Fcn
     disp('Initialization of instruments');
     tic % start stopwatch timer
-    
-    test_info=test_setup();
 end
 %% Timer Stop
-function T1_Stop_Fcn(obj, event, text_arg)
+function T1_Stop_Fcn()
 % T1_Stop_Fcn
     disp('in T1_Stop_Fcn function')
     disp('Total running time is: ')
