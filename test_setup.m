@@ -1,4 +1,4 @@
-classdef test_setup
+classdef test_setup < handle % handle class
     %setup initialize test parameters
     %   ...
     
@@ -12,8 +12,8 @@ classdef test_setup
     end
     
     properties 
-        BMSino
-        B3603
+        BMSino;
+        B3603;
         time = zeros(1, test_setup.MAX_TEST_TIME);
         BatteryCurrent = zeros(1, test_setup.MAX_TEST_TIME);
         CellVoltage = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
@@ -26,6 +26,8 @@ classdef test_setup
     methods
         function obj = test_setup()
             %test_setup Build the objects to run the test
+            % clear all intruments objects connected on serial port
+            delete(instrfindall);
             % Create BMSino and DCDC objects
             obj.BMSino = Battery('Batteria_6s1p_test_NCR18650'); % BMSino with Garbuglia-Unterhost FW
             obj.BMSino.COMinit(obj.BMSINO_BAUDRATE, obj.BMSINO_SERIALPORT);

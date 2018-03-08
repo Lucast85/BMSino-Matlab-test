@@ -5,16 +5,18 @@ classdef Battery < handle % handle class
       RATED_CAPACITY                        = 3200  % mAh
       NOMINAL_VOLTAGE                       = 3600  % mV
       STD_CH_CURRENT                        = 1625  % mA
+      MAX_CH_CURRENT                        = 1700  % mA
       MAX_DS_CURRENT                        = 3200  % mA       
       CUTOFF_CURRENT                        = 65    % mA
-      MAX_CELL_VOLTAGE                      = 4200  % mV
-      MIN_CELL_VOLTAGE                      = 2500  % mV
+      MAX_SECURITY_CELL_VOLTAGE             = 4200  % mV  used for security check
+      MAX_CELL_VOLTAGE                      = 4190  % mV  used for SetPoint Estimation alghoritm
+      MIN_CELL_VOLTAGE                      = 2500  % mV  
       CELL_VOLTAGE_START_SP_CH_REDUCTION    = 4000  % mV
-      CELL_VOLTAGE_START_BALANCING          = 4050  % mV
+      CELL_VOLTAGE_START_BALANCING          = 4000  % mV
       DELTA_VOLTAGE_END_OF_BALANCING        = 30    % mV
       MAX_CELL_TEMPERATURE                  = 40    % °C
       MIN_CELL_TEMPERATURE                  = 0     % °C
-      MAX_BMS_TEMPERATURE                   = 70    % °C
+      MAX_BMS_TEMPERATURE                   = 75    % °C
       MANUFACTURER                          = 'Panasonic'
       PART_NUMBER                           = 'NCR18650B'
       NOTE = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
@@ -22,17 +24,21 @@ classdef Battery < handle % handle class
    
    properties 
       BatteryName                   = 'Unnamed Battery'
-      CellsVoltages                 = zeros(6,1)
-      CellsTemperatures             = zeros(6,1)
-      CellsBalancingStatus          = zeros(6,1)
-      BMSTemperature                = 0
-      TotalCurrent                  = 0
-      TotalVoltage                  = 0
+      CellsVoltages                 = NaN*zeros(6,1)
+      CellsTemperatures             = NaN*zeros(6,1)
+      CellsBalancingStatus          = NaN*zeros(6,1)
+      BMSTemperature                = NaN
+      TotalCurrent                  = NaN
+      TotalVoltage                  = NaN
+      BatteryFullyCharged           = NaN
+      StateOfCharge                 = NaN   % not yet implemented
+      StateOfHealth                 = NaN   % not yet implemented
+      SerialObj
    end
    
-   properties (Access = private)
-       SerialObj
-   end
+%    properties (Access = private)
+%        SerialObj
+%    end
    
    methods
        % Constructor
@@ -51,7 +57,6 @@ classdef Battery < handle % handle class
        % Initialize serial communication
        function COMinit(obj, baudrate, COMport)
            if (nargin == 3 && ischar(COMport) && isnumeric(baudrate))
-                delete(instrfindall);
                 obj.SerialObj = serial(COMport);
                 set(obj.SerialObj, 'BaudRate',baudrate);
                 fopen(obj.SerialObj);
@@ -71,7 +76,7 @@ classdef Battery < handle % handle class
        end
        
        % Close serial communication
-       function result = COMclose(obj)
+       function COMclose(obj)
            fclose(obj.SerialObj);
        end
        
@@ -97,7 +102,7 @@ classdef Battery < handle % handle class
            obj.CellsBalancingStatus = string2binarray(fscanf((obj.SerialObj),'%s'));
        end
        % Set Balancing Status
-       function status = setBalancingStatus(obj, bitmask_binarray)
+       function setBalancingStatus(obj, bitmask_binarray)
            bitmask_string = binarray2string(bitmask_binarray);
            string = strcat('SBCELL' ,32, bitmask_string);
            fprintf(obj.SerialObj, string);

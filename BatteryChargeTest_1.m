@@ -1,61 +1,132 @@
+close all
 clear all
 clc
-%% Figure, axes and animated lines
-figure
-ax = gca;
-ax.YGrid = 'on';
-ax.XGrid = 'on';
-ax.XLabel.String = 'Time';
-yyaxis left
-ax.YLabel.String = 'YLabel left';
-yyaxis right
-ax.YLabel.String = 'ylabel right';
-
-% define the handles of the animated lines to plot data in real time
-hAnimLinesV.CellVoltage1 = animatedline;
-hAnimLinesV.CellVoltage2 = animatedline;
-hAnimLinesV.CellVoltage3 = animatedline;
-hAnimLinesV.CellVoltage4 = animatedline;
-hAnimLinesV.CellVoltage5 = animatedline;
-hAnimLinesV.CellVoltage6 = animatedline;
-
-hAnimLinesBS.CellBalSts1 = animatedline;
-hAnimLinesBS.CellBalSts2 = animatedline;
-hAnimLinesBS.CellBalSts3 = animatedline;
-hAnimLinesBS.CellBalSts4 = animatedline;
-hAnimLinesBS.CellBalSts5 = animatedline;
-hAnimLinesBS.CellBalSts6 = animatedline;
-
-hAnimLinesT.CellTemperature1 = animatedline;
-hAnimLinesT.CellTemperature2 = animatedline;
-hAnimLinesT.CellTemperature3 = animatedline;
-hAnimLinesT.CellTemperature4 = animatedline;
-hAnimLinesT.CellTemperature5 = animatedline;
-hAnimLinesT.CellTemperature6 = animatedline;
-hAnimLinesT.BMSTemperature = animatedline;
-
-hAnimLinesC.BatteryCurrent = animatedline;
 
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
-test_info=test_setup();
+global test_info
+test_info = test_setup();
+
+%% Figure, axes and animated lines
+
+% Figure 1: Cell voltages vs. Battery current
+hfig_CV = figure('Name','Cell voltages' );
+ax_CV = gca;
+ax_CV.YGrid = 'on';
+ax_CV.XGrid = 'on';
+ax_CV.XLabel.String = 'Time [s]';
+yyaxis left
+ax_CV.YLabel.String = 'Cell voltage [V]';
+yyaxis right
+ax_CV.YLabel.String = 'Battery current [A]';
+
+% define the handles of the animated lines to plot data in real time
+hAnimLinesCV.CellVoltage1 = animatedline;
+hAnimLinesCV.CellVoltage2 = animatedline;
+hAnimLinesCV.CellVoltage3 = animatedline;
+hAnimLinesCV.CellVoltage4 = animatedline;
+hAnimLinesCV.CellVoltage5 = animatedline;
+hAnimLinesCV.CellVoltage6 = animatedline;
+hAnimLinesCV.BatteryCurrent = animatedline;
+
+% % plot the limits
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MAX_CH_CURRENT test_info.BMSino.MAX_CH_CURRENT],... % y
+%     'r--','LineWidth',1.4); % properties 
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MAX_CELL_VOLTAGE test_info.BMSino.MAX_CELL_VOLTAGE],... % y
+%     'b--'); % properties 
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MIN_CELL_VOLTAGE test_info.BMSino.MIN_CELL_VOLTAGE],... % y
+%     'b--'); % properties 
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE],... % y
+%     'b-.','LineWidth',1.4); % properties
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.CELL_VOLTAGE_START_BALANCING test_info.BMSino.CELL_VOLTAGE_START_BALANCING],... % y
+%     'b-.','LineWidth',1.4); % properties
+
+% Figure 2: Cell temperatures vs. Battery current
+hfig_CT = figure('Name','Cell temperatures' );
+ax_CT = gca;
+ax_CT.YGrid = 'on';
+ax_CT.XGrid = 'on';
+ax_CT.XLabel.String = 'Time [s]';
+yyaxis left
+ax_CT.YLabel.String = 'Cell temperature [°C]';
+yyaxis right
+ax_CT.YLabel.String = 'Battery current [A]';
+
+% define the handles of the animated lines to plot data in real time
+hAnimLinesCT.CellTemperature1 = animatedline;
+hAnimLinesCT.CellTemperature2 = animatedline;
+hAnimLinesCT.CellTemperature3 = animatedline;
+hAnimLinesCT.CellTemperature4 = animatedline;
+hAnimLinesCT.CellTemperature5 = animatedline;
+hAnimLinesCT.CellTemperature6 = animatedline;
+hAnimLinesCT.BatteryCurrent = animatedline;
+
+% % plot the limits
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MIN_CELL_TEMPERATURE test_info.BMSino.MIN_CELL_TEMPERATURE],... % y
+%     'b--','LineWidth',1.4); % properties 
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MAX_CELL_TEMPERATURE test_info.BMSino.MAX_CELL_TEMPERATURE],... % y
+%     'b--','LineWidth',1.4); % properties 
+
+% Figure 3: BMS temperature vs. Battery current
+hfig_BS = figure('Name','BSM temperature' );
+ax_BS = gca;
+ax_BS.YGrid = 'on';
+ax_BS.XGrid = 'on';
+ax_BS.XLabel.String = 'Time [s]';
+yyaxis left
+ax_BS.YLabel.String = 'BMS temperature [°C]';
+yyaxis right
+ax_BS.YLabel.String = 'Battery current [A]';
+
+% define the handles of the animated lines to plot data in real time
+hAnimLinesBMST.BMSTemperature = animatedline;
+hAnimLinesBMST.BatteryCurrent = animatedline;
+
+% % plot the limits
+% plot([1 test_info.MAX_TEST_TIME],... % x
+%     [test_info.BMSino.MAX_BMS_TEMPERATURE test_info.BMSino.MAX_BMS_TEMPERATURE],... % y
+%     'b--','LineWidth',1.4); % properties 
+
+% Figure 4: BMS temperature and balancing status vs. Battery current
+hfig_BS = figure('Name','Cells balancing status' );
+ax_BS = gca;
+ax_BS.YGrid = 'on';
+ax_BS.XGrid = 'on';
+ax_BS.XLabel.String = 'Time [s]';
+yyaxis left
+ax_BS.YLabel.String = 'Cell with active balancing sts';
+yyaxis right
+ax_BS.YLabel.String = 'Battery current [A]';
+
+% define the handles of the animated lines to plot data in real time
+hAnimLinesBS.BatteryCurrent = animatedline;
 
 %% Define the timer object
 
 % specifies the properties of the timer object
-t = timer('StartDelay', 5, 'Period', 1, 'TasksToExecute', inf, ...
+t = timer('StartDelay', 4, 'Period', 20, 'TasksToExecute', inf,...
           'ExecutionMode', 'fixedRate',...
           'StartFcn', @T1_Start_Fcn,...
-          'TickFcn',{@T1_Trig_Fcn, hAnimLinesV, hAnimLinesT, hAnimLinesC, test_info },...
+          'TimerFcn',{@T1_Trig_Fcn, hAnimLinesCV, hAnimLinesCT, hAnimLinesBMST, hAnimLinesBS},...
           'StopFcn',@T1_Stop_Fcn,...
           'ErrorFcn',@T1_Err_Fcn);
-      
+
 %% Timer trigger
-function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_info)
+function T1_Trig_Fcn(obj, event, hAnimLinesCV, hAnimLinesCT,...
+                        hAnimLinesBMST, hAnimLinesBS)
 % T1_trig_Fcn
 %     disp('in T1_Trig_Fcn function')
 %     disp(round(toc,1))
 
+    global test_info;
+    
     % Initialize errors
     test_error.high_cell_voltage = NaN;
     test_error.low_cell_voltage = NaN;
@@ -74,23 +145,24 @@ function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_i
     
 %% STATE 1
 % Save actual time
-    test_info.time(t_idx) = toc;
+    test_info.time(t_idx) = round(toc,1);
         
-% Disable all balancing mosfets (it's mandatory to accurately measure the 
-    test_info.BMSino.setBalancingStatus(00000000);
+% Disable all balancing mosfets (it's mandatory to accurately measure the
+% cell voltages)
+    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0 0 0]);
     
 % Measure cell temperatures
     test_info.BMSino.getTemperatures();
-    test_info.Celltemperatures(:,t_idx) = test_info.BMSino.CellsTemperatures(:);
+    test_info.CellTemperatures(:,t_idx) = test_info.BMSino.CellsTemperatures(:);
     
 % Measure BMS temperature
-    test_info.BMSino.getTemperatures();
+    test_info.BMSino.getBMSTemperature();	
     test_info.BMSTemperature(t_idx) = test_info.BMSino.BMSTemperature;
 
-% Measure battery current
-    test_info.B3606.getStatus();
-    test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
-    % test_info.BMSino.getCurrent(); %does not work now!
+% % Measure battery current
+%     test_info.B3603.getStatus();
+%     test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
+%     % test_info.BMSino.getCurrent(); %does not work now!
     
 % Finally wait 50 ms, measure cell voltages and compute battery voltage
     pause(0.05);
@@ -100,13 +172,13 @@ function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_i
     
 %% SECURITY CONTROL
     % update error structure
-    if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_CELL_VOLTAGE)
+    if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE)
         test_error.high_cell_voltage = max(test_info.CellVoltage(:, t_idx));
     end
     if(min(test_info.CellVoltage(:, t_idx)) < test_info.BMSino.MIN_CELL_VOLTAGE)
         test_error.low_cell_voltage = min(test_info.CellVoltage(:, t_idx));
     end
-    if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.STD_CH_CURRENT)
+    if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.MAX_CH_CURRENT)
         test_error.high_battery_current = max(test_info.BatteryCurrent(t_idx));
     end
     if(max(test_info.CellTemperatures(:,t_idx)) > test_info.BMSino.MAX_CELL_TEMPERATURE)
@@ -160,14 +232,14 @@ function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_i
 
     %% STATE 5
     %  Apply the current setpoint already estimated
-        test_info.B3606.setCurrent(ChSetPoint);
+        test_info.B3603.setCurrent(ChSetPoint);
         if(~test_info.B3603.DCDCoutputEnabled)
-            test_info.B3606.setOutput(1);
+            test_info.B3603.setOutput(1);
         end
 
     else %actuate security features: stop all
         % stop charge (open relay)
-        test_info.B3606.setOutput(0);
+        test_info.B3603.setOutput(0);
         test_info.B3603.DCDCoutputEnabled();
         
         % stop balancing
@@ -194,15 +266,15 @@ function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_i
     end
 %% STATE 6
 % plot all values in real-time
-    
+
     % Plot in real time the cells values
     % Cells voltage
-    addpoints(hAnimLinesV.CellVoltage1, test_info.time(t_idx), test_info.CellVoltage(1,t_idx))
-    addpoints(hAnimLinesV.CellVoltage2, test_info.time(t_idx), test_info.CellVoltage(2,t_idx))
-    addpoints(hAnimLinesV.CellVoltage3, test_info.time(t_idx), test_info.CellVoltage(3,t_idx))
-    addpoints(hAnimLinesV.CellVoltage4, test_info.time(t_idx), test_info.CellVoltage(4,t_idx))
-    addpoints(hAnimLinesV.CellVoltage5, test_info.time(t_idx), test_info.CellVoltage(5,t_idx))
-    addpoints(hAnimLinesV.CellVoltage6, test_info.time(t_idx), test_info.CellVoltage(6,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage1, test_info.time(t_idx), test_info.CellVoltage(1,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage2, test_info.time(t_idx), test_info.CellVoltage(2,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage3, test_info.time(t_idx), test_info.CellVoltage(3,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage4, test_info.time(t_idx), test_info.CellVoltage(4,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage5, test_info.time(t_idx), test_info.CellVoltage(5,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage6, test_info.time(t_idx), test_info.CellVoltage(6,t_idx))
     % Cells balancing status
     addpoints(hAnimLinesBS.CellBalSts1, test_info.time(t_idx), test_info.CellBalancingStatus(1,t_idx))
     addpoints(hAnimLinesBS.CellBalSts2, test_info.time(t_idx), test_info.CellBalancingStatus(2,t_idx))
@@ -211,34 +283,34 @@ function T1_Trig_Fcn(hAnimLinesV, hAnimLinesT, hAnimLinesC, hAnimLinesBS, test_i
     addpoints(hAnimLinesBS.CellBalSts5, test_info.time(t_idx), test_info.CellBalancingStatus(5,t_idx))
     addpoints(hAnimLinesBS.CellBalSts6, test_info.time(t_idx), test_info.CellBalancingStatus(6,t_idx))
     % Cells temperature
-    addpoints(hAnimLinesT.CellTemperature1, test_info.time(t_idx), test_info.CellTemperature(1,t_idx))
-    addpoints(hAnimLinesT.CellTemperature2, test_info.time(t_idx), test_info.CellTemperature(2,t_idx))
-    addpoints(hAnimLinesT.CellTemperature3, test_info.time(t_idx), test_info.CellTemperature(3,t_idx))
-    addpoints(hAnimLinesT.CellTemperature4, test_info.time(t_idx), test_info.CellTemperature(4,t_idx))
-    addpoints(hAnimLinesT.CellTemperature5, test_info.time(t_idx), test_info.CellTemperature(5,t_idx))
-    addpoints(hAnimLinesT.CellTemperature6, test_info.time(t_idx), test_info.CellTemperature(6,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature1, test_info.time(t_idx), test_info.CellTemperature(1,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature2, test_info.time(t_idx), test_info.CellTemperature(2,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature3, test_info.time(t_idx), test_info.CellTemperature(3,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature4, test_info.time(t_idx), test_info.CellTemperature(4,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature5, test_info.time(t_idx), test_info.CellTemperature(5,t_idx))
+    addpoints(hAnimLinesCT.CellTemperature6, test_info.time(t_idx), test_info.CellTemperature(6,t_idx))
     % BMS temperature
-    addpoints(hAnimLinesT.BMSTemperature, test_info.time(t_idx), test_info.BMSTemperature)
+    addpoints(hAnimLinesBMST.BMSTemperature, test_info.time(t_idx), test_info.BMSTemperature)
     % Battery current
-    addpoints(hAnimLinesC.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent)
+    addpoints(hAnimLinesCT.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent)
     
     % Update axes
     %ax.XLim = time-50; % sembra non funzionare
     drawnow
 end
 %% Timer Error
-function T1_Err_Fcn()
+function T1_Err_Fcn(obj, event, text_arg)
 % T1_Err_Fcn
     disp('in T1_Err_Fcn function')
 end
 %% Timer Start
-function T1_Start_Fcn()
+function T1_Start_Fcn(obj, event, text_arg)
 % T1_Start_Fcn
     disp('Initialization of instruments');
     tic % start stopwatch timer
 end
 %% Timer Stop
-function T1_Stop_Fcn()
+function T1_Stop_Fcn(obj, event, text_arg)
 % T1_Stop_Fcn
     disp('in T1_Stop_Fcn function')
     disp('Total running time is: ')

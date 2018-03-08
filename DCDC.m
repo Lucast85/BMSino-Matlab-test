@@ -37,7 +37,6 @@ classdef DCDC < handle % handle class
        % Initialize serial communication
        function COMinit(obj, baudrate, COMport)
            if (nargin == 3 && ischar(COMport) && isnumeric(baudrate))
-                delete(instrfindall);
                 obj.SerialObj = serial(COMport);
                 set(obj.SerialObj, 'BaudRate',baudrate);
                 fopen(obj.SerialObj);
@@ -80,7 +79,7 @@ classdef DCDC < handle % handle class
             string = strcat('OUTPUT',32, int2str(sts));
             fprintf(obj.SerialObj, string);
             disp('Output set')
-            flushinput(obj.SerialObj);0
+            flushinput(obj.SerialObj);
        end
        % Set Autocommit
        function setAutocommit(obj)
