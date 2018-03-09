@@ -11,9 +11,8 @@ classdef DCDC < handle % handle class
        DCDCoutputCurrent    
        DCDCoutputVoltage 	 
        DCDCinputVoltage     
-       DCDCoutputEnabled      
+       DCDCoutputEnabled    
        DCDCoutputStatus      
-       
    end
    
    properties (Access = private)
@@ -98,15 +97,15 @@ classdef DCDC < handle % handle class
        % Get DC-DC Status, output current and voltgage, input voltage
        function status = getStatus(obj)
             flushinput(obj.SerialObj);
-            fprintf(obj.SerialObj, 'STATUS');
+            fprintf(obj.SerialObj, 'STATUS\n');
             if (fscanf((obj.SerialObj),'%s') =='STATUS:') 
-                disp('Status received from DCDC')
+                disp('Status received from DCDC');
                 %fscanf((obj.SerialObj),'%s');
-                obj.DCDCoutputEnabled = fscanf((obj.SerialObj),'OUTPUT:%s');
-                obj.DCDCinputVoltage = fscanf((obj.SerialObj), 'VIN:%f');
-                obj.DCDCoutputVoltage = fscanf((obj.SerialObj), 'VOUT:%f');
-                obj.DCDCoutputCurrent = fscanf((obj.SerialObj), 'COUT:%f');
-                obj.DCDCoutputStatus = fscanf((obj.SerialObj), 'CONSTANT:%s');
+                obj.DCDCoutputEnabled = fscanf((obj.SerialObj),'OUTPUT: %s');
+                obj.DCDCinputVoltage = fscanf((obj.SerialObj), 'VIN: %f');
+                obj.DCDCoutputVoltage = fscanf((obj.SerialObj), 'VOUT: %f');
+                obj.DCDCoutputCurrent = fscanf((obj.SerialObj), 'COUT: %f');
+                obj.DCDCoutputStatus = fscanf((obj.SerialObj), 'CONSTANT: %s');
                 fscanf((obj.SerialObj), '%s');      %read out last line from the buffer ("DONE")
                 status = 1;
                 return
@@ -116,7 +115,6 @@ classdef DCDC < handle % handle class
                 return
             end
             flushinput(obj.SerialObj);
-            
        end
 
    end

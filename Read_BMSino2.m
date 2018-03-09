@@ -1,8 +1,10 @@
 clear all
 clc
 delete(instrfindall);
-
 test_info=test_setup();
+
+test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
+
 test_info.BMSino.getBalancingStatus
 test_info.BMSino.getBMSTemperature	
 test_info.BMSino.getTemperatures

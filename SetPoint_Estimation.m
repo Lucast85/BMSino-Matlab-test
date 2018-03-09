@@ -3,6 +3,7 @@ function [ChSetPoint] = SetPoint_Estimation(Battery, HighestCellVoltage)
 %reading the highest cell voltage of the battery pack.
 %   Estimate the current setpoint from the highest cell votlage of the
 %   battery pack and from some useful information about the cells used.
+%   Returns value in A, not in mA!!!
     DeltaVoltage = 0;
     DeltaVoltageMax = 0;
     ChSetPoint=0;
@@ -11,8 +12,8 @@ function [ChSetPoint] = SetPoint_Estimation(Battery, HighestCellVoltage)
     DeltaVoltageMax = (Battery.MAX_CELL_VOLTAGE - Battery.CELL_VOLTAGE_START_SP_CH_REDUCTION);
     if (DeltaVoltage > 0)
         if (DeltaVoltage <= DeltaVoltageMax)
-            ChSetPoint = (100 - (100*DeltaVoltage / DeltaVoltageMax)) * Battery.STD_CH_CURRENT;
-            if ChSetPoint < Battery.CUTOFF_CURRENT
+            ChSetPoint = (1 - (DeltaVoltage / DeltaVoltageMax)) * Battery.STD_CH_CURRENT / 1000;
+            if ChSetPoint < (Battery.CUTOFF_CURRENT / 1000)
                 ChSetPoint = 0;
                 Battery.BatteryFullyCharged = 1;
             end

@@ -3,12 +3,15 @@ clc
 delete(instrfindall);
 
 test_info=test_setup();
+test_info.B3603.getStatus();
+test_info.B3603.setOutput(0)
 
+% A=test_info.B3603.DCDCoutputEnabled;
 
-test_info.B3603.setCurrent(245);
-test_info.B3603.setOutput(1);
-
-test_info.BatteryCurrent = test_info.B3603.DCDCoutputCurrent;
+% test_info.B3603.setCurrent(0.2);
+% test_info.B3603.setOutput(1);
+% 
+% test_info.BatteryCurrent = test_info.B3603.DCDCoutputCurrent;
 
 
 % myDCDC.getVoltage

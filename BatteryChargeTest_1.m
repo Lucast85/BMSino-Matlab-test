@@ -140,7 +140,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV, hAnimLinesCT,...
     persistent t_idx
     if isempty(t_idx)
         t_idx = 0;
-    end 
+    end
     t_idx = t_idx + 1;
     
 %% STATE 1
@@ -187,7 +187,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV, hAnimLinesCT,...
     if(min(test_info.CellTemperatures(:,t_idx)) < test_info.BMSino.MIN_CELL_TEMPERATURE)
         test_error.low_cell_temperature = min(test_info.CellTemperatures(:,t_idx));
     end
-    if(max(BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
+    if(max(test_info.BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
         test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
     end
 
@@ -202,40 +202,41 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV, hAnimLinesCT,...
     %% STATE 2
     % Compute & apply balancing mask
         % compute balancing mask
-        toWriteCellBalancingStatus = zeros(test_info.CELLS_NUMBER);
-        for i=0:test_info.CELLS_NUMBER
+        toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
+        for i=1:test_info.CELLS_NUMBER
             if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
                 % it's time to balance the i-th cell!
-                toWriteCellBalancingStatus(i) = 1;
+                toWriteCellBalancingStatus(1,i) = 1;
             else
                 % switch off the balancing mosfet on i-th cell
-                toWriteCellBalancingStatus(i) = 0;
+                toWriteCellBalancingStatus(1,i) = 0;
             end
         end
 
         % write balancing mask to BMSino
-        test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(i));
+        test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
 
     %% STATE 3
     % Estimate current charge setpoint
         HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
         ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
         fprintf('esitimated current setpoint is: %1.3f\n', ChSetPoint);
-        ChSetPoint = 0;
         
     %% STATE 4
         % check balancing status vector
-        test_info.CellBalancingStatus = test_info.BMSino.getBalancingStatus;
-        if test_info.CellBalancingStatus ~= toWriteCellBalancingStatus
+        test_info.BMSino.getBalancingStatus;
+        test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
+        if test_info.CellBalancingStatus(:, t_idx) ~= toWriteCellBalancingStatus
              disp('error during writing of balancing status register');
         end
 
-    %% STATE 5
-    %  Apply the current setpoint already estimated
-        test_info.B3603.setCurrent(ChSetPoint);
-        if(~test_info.B3603.DCDCoutputEnabled)
-            test_info.B3603.setOutput(1);
-        end
+%     %% STATE 5
+%     %  Apply the current setpoint already estimated
+%         test_info.B3603.getStatus();
+%         test_info.B3603.setCurrent(ChSetPoint);
+%         if(~strcmp(test_info.B3603.DCDCoutputEnabled, 'ON'))
+%             test_info.B3603.setOutput(1);
+%         end
 
     else %actuate security features: stop all
         % stop charge (open relay)

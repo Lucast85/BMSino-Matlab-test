@@ -3,8 +3,8 @@ classdef test_setup < handle % handle class
     %   ...
     
     properties( Constant = true )
-        DCDC_SERIALPORT = 'COM8'    % COM port 
-        BMSINO_SERIALPORT = 'COM6'  % COM port 
+        DCDC_SERIALPORT = 'COM2'    % COM port 
+        BMSINO_SERIALPORT = 'COM8'  % COM port 
         BMSINO_BAUDRATE = 115200    % bps
         DCDC_BAUDRATE = 38400       % bps
         MAX_TEST_TIME = 7200;       % seconds
