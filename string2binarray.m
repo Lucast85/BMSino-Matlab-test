@@ -15,5 +15,10 @@ binarray= zeros(1,lstring);
             end
         end
     end
+    if lstring < 6
+        for i=(lstring+1):6
+            binarray(1,i) = 0;
+        end
+    end
 end
 

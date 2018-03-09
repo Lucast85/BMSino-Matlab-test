@@ -1,7 +1,15 @@
-test_info=test_setup();
+clear all
+clc
 delete(instrfindall);
-myDCDC=DCDC('B3603');
-myDCDC.COMinit(test_info.DCDC_BaudRate, test_info.DCDC_SerialPort);
+
+test_info=test_setup();
+
+
+test_info.B3603.setCurrent(245);
+test_info.B3603.setOutput(1);
+
+test_info.BatteryCurrent = test_info.B3603.DCDCoutputCurrent;
+
 
 % myDCDC.getVoltage
 % myDCDC.getCurrent
@@ -14,5 +22,3 @@ pause(2)
 % myDCDC.setOutput
 % myDCDC.setName
 % myDCDC.setAutocommit
-
-myDCDC.getStatus

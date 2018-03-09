@@ -5,10 +5,10 @@ classdef DCDC < handle % handle class
    
    properties 
        DCDCName             = 'Unnamed DC-DC converter'
-       setpointVoltage
-       setpointCurrent
-       setpointOutput 
-       DCDCoutputCurrent
+       setpointVoltage      = NaN
+       setpointCurrent      = NaN
+       setpointOutput       = NaN
+       DCDCoutputCurrent    
        DCDCoutputVoltage 	 
        DCDCinputVoltage     
        DCDCoutputEnabled      

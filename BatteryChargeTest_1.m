@@ -301,6 +301,7 @@ end
 %% Timer Error
 function T1_Err_Fcn(obj, event, text_arg)
 % T1_Err_Fcn
+    delete(instrfindall);
     disp('in T1_Err_Fcn function')
 end
 %% Timer Start
@@ -312,6 +313,7 @@ end
 %% Timer Stop
 function T1_Stop_Fcn(obj, event, text_arg)
 % T1_Stop_Fcn
+    delete(instrfindall);
     disp('in T1_Stop_Fcn function')
     disp('Total running time is: ')
     disp(round(toc,1))

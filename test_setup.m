@@ -3,8 +3,8 @@ classdef test_setup < handle % handle class
     %   ...
     
     properties( Constant = true )
-        DCDC_SERIALPORT = 'COM3'    % COM port 
-        BMSINO_SERIALPORT = 'COM8'  % COM port 
+        DCDC_SERIALPORT = 'COM8'    % COM port 
+        BMSINO_SERIALPORT = 'COM6'  % COM port 
         BMSINO_BAUDRATE = 115200    % bps
         DCDC_BAUDRATE = 38400       % bps
         MAX_TEST_TIME = 7200;       % seconds
@@ -14,13 +14,13 @@ classdef test_setup < handle % handle class
     properties 
         BMSino;
         B3603;
-        time = zeros(1, test_setup.MAX_TEST_TIME);
-        BatteryCurrent = zeros(1, test_setup.MAX_TEST_TIME);
-        CellVoltage = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
-        BatteryVoltage=zeros(1, test_setup.MAX_TEST_TIME);
-        CellTemperatures = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
-        CellBalancingStatus = zeros(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
-        BMSTemperature = zeros(1, test_setup.MAX_TEST_TIME);
+        time = NaN * ones(1, test_setup.MAX_TEST_TIME);
+        BatteryCurrent = NaN * ones(1, test_setup.MAX_TEST_TIME);
+        CellVoltage = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        BatteryVoltage=NaN * ones(1, test_setup.MAX_TEST_TIME);
+        CellTemperatures = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        CellBalancingStatus = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        BMSTemperature = NaN * ones(1, test_setup.MAX_TEST_TIME);
     end
     
     methods

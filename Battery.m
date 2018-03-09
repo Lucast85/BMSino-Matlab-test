@@ -26,7 +26,8 @@ classdef Battery < handle % handle class
       BatteryName                   = 'Unnamed Battery'
       CellsVoltages                 = NaN*zeros(6,1)
       CellsTemperatures             = NaN*zeros(6,1)
-      CellsBalancingStatus          = NaN*zeros(6,1)
+      CellsBalancingStatus          = NaN*zeros(6,1) %left justified
+      % e.g. cell 1 and 2 on balancing: 110000
       BMSTemperature                = NaN
       TotalCurrent                  = NaN
       TotalVoltage                  = NaN
