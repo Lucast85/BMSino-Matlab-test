@@ -4,12 +4,12 @@ classdef Battery < handle % handle class
       P = 1
       RATED_CAPACITY                        = 3200  % mAh
       NOMINAL_VOLTAGE                       = 3600  % mV
-      STD_CH_CURRENT                        = 1625  % mA
-      MAX_CH_CURRENT                        = 1700  % mA
+      STD_CH_CURRENT                        = 1.625  % A
+      MAX_CH_CURRENT                        = 1700  % A
       MAX_DS_CURRENT                        = 3200  % mA       
       CUTOFF_CURRENT                        = 65    % mA
-      MAX_SECURITY_CELL_VOLTAGE             = 4200  % mV  used for security check
-      MAX_CELL_VOLTAGE                      = 4190  % mV  used for SetPoint Estimation alghoritm
+      MAX_SECURITY_CELL_VOLTAGE             = 4150  % mV  used for security check
+      MAX_CELL_VOLTAGE                      = 4110 % mV  used for SetPoint Estimation alghoritm
       MIN_CELL_VOLTAGE                      = 2500  % mV  
       CELL_VOLTAGE_START_SP_CH_REDUCTION    = 4000  % mV
       CELL_VOLTAGE_START_BALANCING          = 4000  % mV
@@ -85,22 +85,26 @@ classdef Battery < handle % handle class
        function getVoltages(obj)
             fprintf(obj.SerialObj, 'mVCELL A');
             obj.CellsVoltages = cell2mat(textscan(fscanf(obj.SerialObj),'%f'));
-			obj.TotalVoltage = sum(obj.CellsVoltages);										  
+			obj.TotalVoltage = sum(obj.CellsVoltages);
+            flushinput(obj.SerialObj);
        end
        % Get Temperatures
        function getTemperatures(obj)
            fprintf(obj.SerialObj, 'TCELL A');
            obj.CellsTemperatures = cell2mat(textscan(fscanf(obj.SerialObj),'%f'));
+           flushinput(obj.SerialObj);
        end
        % Get Temperature of BMS
        function getBMSTemperature(obj)
            fprintf(obj.SerialObj, 'TBMS');
            obj.BMSTemperature = cell2mat(textscan(fscanf(obj.SerialObj),'%f'));
+           flushinput(obj.SerialObj);
        end
        % Get Balancing Status
        function getBalancingStatus(obj)
            fprintf(obj.SerialObj, 'RBCELL');
            obj.CellsBalancingStatus = string2binarray(fscanf((obj.SerialObj),'%s'));
+           flushinput(obj.SerialObj);
        end
        % Set Balancing Status
        function setBalancingStatus(obj, bitmask_binarray)
@@ -119,6 +123,7 @@ classdef Battery < handle % handle class
 %                status =  0;
 %                return 
 %            end
+           flushinput(obj.SerialObj);
        end
    end
    

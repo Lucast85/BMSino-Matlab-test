@@ -9,6 +9,7 @@ classdef test_setup < handle % handle class
         DCDC_BAUDRATE = 38400       % bps
         MAX_TEST_TIME = 7200;       % seconds
         CELLS_NUMBER = 6;           % possible only 4, 5 or 6 cells each BMSino
+        
     end
     
     properties 

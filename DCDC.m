@@ -1,5 +1,6 @@
 classdef DCDC < handle % handle class
    properties (Constant)
+       MAX_DCDC_VOLTAGE = 27.2;       %4.2*6 (cells) + 2 
 
    end
    
@@ -8,11 +9,12 @@ classdef DCDC < handle % handle class
        setpointVoltage      = NaN
        setpointCurrent      = NaN
        setpointOutput       = NaN
-       DCDCoutputCurrent    
-       DCDCoutputVoltage 	 
-       DCDCinputVoltage     
-       DCDCoutputEnabled    
-       DCDCoutputStatus      
+       DCDCoutputCurrent    = 10
+       DCDCoutputVoltage 	= 10 
+       DCDCinputVoltage     = 1.2
+       DCDCoutputEnabled    = 'OFF'
+       DCDCoutputStatus     = 'CURRENT'
+       
    end
    
    properties (Access = private)
@@ -49,9 +51,23 @@ classdef DCDC < handle % handle class
 %                 else 
 %                     disp('DC-DC converter name is not correct: Serial communication issues?');
 %                 end
+
+                string = strcat('OUTPUT',32, int2str(0));
+                fprintf(obj.SerialObj, string);
+                disp('Output set')
+                pause(0.01);
+                flushinput(obj.SerialObj);
+                string = strcat('VOLTAGE',32, int2str(obj.MAX_DCDC_VOLTAGE));
+                fprintf(obj.SerialObj, string);
+                disp('Max DCDC Voltage set');
+               
+                
+
+                
            else
                error('Inputs arguments are wrong');
            end
+
            flushinput(obj.SerialObj);
        end
        % Close serial communication
@@ -79,6 +95,7 @@ classdef DCDC < handle % handle class
             fprintf(obj.SerialObj, string);
             disp('Output set')
             flushinput(obj.SerialObj);
+            flushoutput(obj.SerialObj);
        end
        % Set Autocommit
        function setAutocommit(obj)
@@ -98,22 +115,29 @@ classdef DCDC < handle % handle class
        function status = getStatus(obj)
             flushinput(obj.SerialObj);
             fprintf(obj.SerialObj, 'STATUS\n');
-            if (fscanf((obj.SerialObj),'%s') =='STATUS:') 
+%             if (fscanf((obj.SerialObj),'%s') =='STATUS:') 
                 disp('Status received from DCDC');
                 %fscanf((obj.SerialObj),'%s');
+                fscanf((obj.SerialObj), 'STATUS:%s');
                 obj.DCDCoutputEnabled = fscanf((obj.SerialObj),'OUTPUT: %s');
                 obj.DCDCinputVoltage = fscanf((obj.SerialObj), 'VIN: %f');
                 obj.DCDCoutputVoltage = fscanf((obj.SerialObj), 'VOUT: %f');
-                obj.DCDCoutputCurrent = fscanf((obj.SerialObj), 'COUT: %f');
+                % read COUT: we use a workaround to read the real current
+                COUT_str = fscanf((obj.SerialObj), 'COUT: %s');
+                if contains(COUT_str, '.') % the output current string contains the dot
+                    obj.DCDCoutputCurrent = sscanf(COUT_str, '%f');
+                else % then the output current is given in Ampere
+                    obj.DCDCoutputCurrent = sscanf(COUT_str, '%f')*0.001;
+                end
                 obj.DCDCoutputStatus = fscanf((obj.SerialObj), 'CONSTANT: %s');
-                fscanf((obj.SerialObj), '%s');      %read out last line from the buffer ("DONE")
+                fscanf((obj.SerialObj), 'DONE%s');      %read out last line from the buffer ("DONE")
                 status = 1;
-                return
-            else
-                disp('ERROR: Status not received from DCDC')
-                status = 0;
-                return
-            end
+                
+%             else
+%                 disp('ERROR: Status not received from DCDC')
+%                 status = 0;
+%                 
+%             end
             flushinput(obj.SerialObj);
        end
 

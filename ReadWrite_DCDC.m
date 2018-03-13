@@ -4,7 +4,7 @@ delete(instrfindall);
 
 test_info=test_setup();
 test_info.B3603.getStatus();
-test_info.B3603.setOutput(0)
+test_info.B3603.setOutput(1);
 
 % A=test_info.B3603.DCDCoutputEnabled;
 
