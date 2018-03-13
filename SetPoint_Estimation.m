@@ -12,7 +12,7 @@ function [ChSetPoint] = SetPoint_Estimation(Battery, HighestCellVoltage)
     DeltaVoltageMax = (Battery.MAX_CELL_VOLTAGE - Battery.CELL_VOLTAGE_START_SP_CH_REDUCTION);
     if (DeltaVoltage > 0)
         if (DeltaVoltage <= DeltaVoltageMax)
-            ChSetPoint = (1 - (DeltaVoltage / DeltaVoltageMax)) * Battery.STD_CH_CURRENT / 1000;
+            ChSetPoint = (1 - (DeltaVoltage / DeltaVoltageMax)) * Battery.STD_CH_CURRENT;
             if ChSetPoint < (Battery.CUTOFF_CURRENT / 1000)
                 ChSetPoint = 0;
                 Battery.BatteryFullyCharged = 1;

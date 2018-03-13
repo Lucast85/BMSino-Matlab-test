@@ -84,8 +84,17 @@ classdef DCDC < handle % handle class
        end
        % Set Current
        function setCurrent(obj, current)
-            string = strcat('CURRENT',32, num2str(current,'%1.3f\n'));
-            fprintf(obj.SerialObj, string);
+            if current <0.001
+                string = strcat('CURRENT',32,'0.001\n');
+                fprintf(obj.SerialObj, string);
+                string = strcat('OUTPUT',32, '0');
+                fprintf(obj.SerialObj, string);
+                flushinput(obj.SerialObj);
+                flushoutput(obj.SerialObj);
+            else
+                string = strcat('CURRENT',32, num2str(current,'%1.3f\n'));
+                fprintf(obj.SerialObj, string);
+            end
             disp('Current set')
             flushinput(obj.SerialObj);
        end
@@ -132,7 +141,8 @@ classdef DCDC < handle % handle class
                 end
                 
                 obj.DCDCoutputStatus = fscanf((obj.SerialObj), 'CONSTANT: %s');
-                fscanf((obj.SerialObj), 'DONE%s');      %read out last line from the buffer ("DONE")
+                flushinput(obj.SerialObj);
+                %fscanf((obj.SerialObj), 'DONE%s');      %read out last line from the buffer ("DONE")
                 status = 1;
                 
 %             else

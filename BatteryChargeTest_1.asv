@@ -365,13 +365,12 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     
     % BMS temperature
     addpoints(hAnimLinesBMST.BMSTemperature, test_info.time(t_idx), test_info.BMSTemperature(t_idx))
-    addpoints(hAnimLinesBMST.BMSTemperature_h_limit, test_info.time(t_idx), test_info.BMSino.MAX_BMS_TEMPERATURE)
-    
     % Battery current
 %     addpoints(hAnimLinesCT.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent(t_idx))
     addpoints(hAnimLinesCV.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent(t_idx))
+    
     addpoints(hAnimLinesBMST.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent(t_idx))
-    addpoints(hAnimLinesBS.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent(t_idx))
+    
     % Update axes
     drawnow limitrate
     

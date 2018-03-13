@@ -6,7 +6,7 @@ test_info=test_setup();
 
 test_info.B3603.getStatus();
 
-test_info.B3603.setCurrent(1.3);
+test_info.B3603.setCurrent(0.5);
 test_info.B3603.setOutput(1);
 pause(1);
 A=test_info.B3603.DCDCoutputEnabled;
