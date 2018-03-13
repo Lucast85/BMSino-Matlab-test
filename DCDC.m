@@ -57,7 +57,7 @@ classdef DCDC < handle % handle class
                 disp('Output set')
                 pause(0.01);
                 flushinput(obj.SerialObj);
-                string = strcat('VOLTAGE',32, int2str(obj.MAX_DCDC_VOLTAGE));
+                string = strcat('VOLTAGE',32, num2str(obj.MAX_DCDC_VOLTAGE,'%1.3f\n'));
                 fprintf(obj.SerialObj, string);
                 disp('Max DCDC Voltage set');
                
@@ -77,14 +77,14 @@ classdef DCDC < handle % handle class
        
        % Set Voltage
        function setVoltage(obj, voltage)
-            string = strcat('VOLTAGE',32, int2str(voltage));
+            string = strcat('VOLTAGE',32, num2str(voltage,'%1.3f\n'));
             fprintf(obj.SerialObj, string);
             disp('Voltage set')
             flushinput(obj.SerialObj);
        end
        % Set Current
        function setCurrent(obj, current)
-            string = strcat('CURRENT',32, int2str(current));
+            string = strcat('CURRENT',32, num2str(current,'%1.3f\n'));
             fprintf(obj.SerialObj, string);
             disp('Current set')
             flushinput(obj.SerialObj);
