@@ -122,6 +122,7 @@ classdef DCDC < handle % handle class
                 obj.DCDCoutputEnabled = fscanf((obj.SerialObj),'OUTPUT: %s');
                 obj.DCDCinputVoltage = fscanf((obj.SerialObj), 'VIN: %f');
                 obj.DCDCoutputVoltage = fscanf((obj.SerialObj), 'VOUT: %f');
+                %obj.DCDCoutputVoltage = fscanf((obj.SerialObj), 'COUT: %f');
                 % read COUT: we use a workaround to read the real current
                 COUT_str = fscanf((obj.SerialObj), 'COUT: %s');
                 if contains(COUT_str, '.') % the output current string contains the dot
@@ -129,6 +130,7 @@ classdef DCDC < handle % handle class
                 else % then the output current is given in Ampere
                     obj.DCDCoutputCurrent = sscanf(COUT_str, '%f')*0.001;
                 end
+                
                 obj.DCDCoutputStatus = fscanf((obj.SerialObj), 'CONSTANT: %s');
                 fscanf((obj.SerialObj), 'DONE%s');      %read out last line from the buffer ("DONE")
                 status = 1;

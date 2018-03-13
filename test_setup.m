@@ -4,7 +4,7 @@ classdef test_setup < handle % handle class
     
     properties( Constant = true )
         DCDC_SERIALPORT = 'COM2'    % COM port 
-        BMSINO_SERIALPORT = 'COM8'  % COM port 
+        BMSINO_SERIALPORT = 'COM3'  % COM port 
         BMSINO_BAUDRATE = 115200    % bps
         DCDC_BAUDRATE = 38400       % bps
         MAX_TEST_TIME = 7200;       % seconds
@@ -32,10 +32,11 @@ classdef test_setup < handle % handle class
             % Create BMSino and DCDC objects
             obj.BMSino = Battery('Batteria_6s1p_test_NCR18650'); % BMSino with Garbuglia-Unterhost FW
             obj.BMSino.COMinit(obj.BMSINO_BAUDRATE, obj.BMSINO_SERIALPORT);
+            %pause(0.1);
             
             obj.B3603 = DCDC('B3603');                  % Calibrated B3603 with custom FW (Luca Buccolini)
             obj.B3603.COMinit(obj.DCDC_BAUDRATE, obj.DCDC_SERIALPORT);
-            
+            %pause(0.1);
         end
     end
 end
