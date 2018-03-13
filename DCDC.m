@@ -87,8 +87,10 @@ classdef DCDC < handle % handle class
             if current <0.001
                 string = strcat('CURRENT',32,'0.001\n');
                 fprintf(obj.SerialObj, string);
+                pause(0.01)
                 string = strcat('OUTPUT',32, '0');
                 fprintf(obj.SerialObj, string);
+                pause(0.01)
                 flushinput(obj.SerialObj);
                 flushoutput(obj.SerialObj);
             else
