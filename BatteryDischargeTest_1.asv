@@ -6,8 +6,10 @@ clc
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 global test_info
-global mV_START_TO_BALANCE
-mV_START_TO_BALANCE = 3800
+global mV_START_TO_BALANCE;
+mV_START_TO_BALANCE = 3800;
+global mv_CELLS_SETPOINT;
+mv_CELLS_SETPOINT = [3850 3800 3825 3826 2820 3815];
 test_info = test_setup();
 
 %% Figure, axes and animated lines

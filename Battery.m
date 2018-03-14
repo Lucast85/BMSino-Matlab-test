@@ -124,6 +124,7 @@ classdef Battery < handle % handle class
 %                return 
 %            end
            flushinput(obj.SerialObj);
+           flushoutput(obj.SerialObj);
        end
    end
    

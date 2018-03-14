@@ -6,8 +6,8 @@ clc
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 global test_info
-global mV_START_TO_BALANCE
-mV_START_TO_BALANCE = 3800
+global mv_CELLS_SETPOINT;
+mv_CELLS_SETPOINT = [3915 3810 3900 3826 3820 3815];
 test_info = test_setup();
 
 %% Figure, axes and animated lines
@@ -165,7 +165,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 % T1_trig_Fcn
 
     global test_info;
-    global mV_START_TO_BALANCE;
+    global mv_CELLS_SETPOINT;
 
     % static variable. t_idx is the number of times the trigger function is
     % called
@@ -254,7 +254,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % compute balancing mask
         toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
         for i=1:test_info.CELLS_NUMBER
-            if test_info.CellVoltage(i, t_idx) >= mV_START_TO_BALANCE
+            if test_info.CellVoltage(i, t_idx) >= mv_CELLS_SETPOINT(i)
                 % it's time to balance the i-th cell!
                 toWriteCellBalancingStatus(1,i) = 1;
             else
@@ -270,7 +270,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % check balancing status vector
         test_info.BMSino.getBalancingStatus;
         test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
-        if test_info.CellBalancingStatus(:, t_idx) ~= toWriteCellBalancingStatus
+        if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
              disp('error during writing of balancing status register');
         end
 

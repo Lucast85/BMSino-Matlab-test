@@ -15,7 +15,6 @@ while(1)
     test_info.BMSino.getVoltages
     test_info.BMSino.setBalancingStatus([0 1 0 1 0 0])
     test_info.BMSino.getBalancingStatus
-    GetBalSts2= test_info.BMSino.CellsBalancingStatus;
     pause(1)
 end
 % myBattery=Battery('BMSino');
