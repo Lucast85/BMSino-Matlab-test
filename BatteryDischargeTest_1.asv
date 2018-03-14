@@ -2,9 +2,12 @@ close all
 clear all
 clc
 
+
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 global test_info
+global mV_START_TO_BALANCE
+mV_START_TO_BALANCE = 3800
 test_info = test_setup();
 
 %% Figure, axes and animated lines
@@ -162,7 +165,8 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 % T1_trig_Fcn
 
     global test_info;
-      
+    global mV_START_TO_BALANCE;
+
     % static variable. t_idx is the number of times the trigger function is
     % called
     persistent t_idx
@@ -211,15 +215,18 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     % update error structure
     if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE)
         test_error.high_cell_voltage = max(test_info.CellVoltage(:, t_idx));
-    else test_error.high_cell_voltage = NaN;
+    else
+        test_error.high_cell_voltage = NaN;
     end
     if(min(test_info.CellVoltage(:, t_idx)) < test_info.BMSino.MIN_CELL_VOLTAGE)
         test_error.low_cell_voltage = min(test_info.CellVoltage(:, t_idx));
-    else test_error.low_cell_voltage = NaN;
+    else
+        test_error.low_cell_voltage = NaN;
     end
     if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.MAX_CH_CURRENT)
         test_error.high_battery_current = max(test_info.BatteryCurrent(t_idx));
-    else test_error.high_battery_current = NaN;
+    else
+        test_error.high_battery_current = NaN;
     end
 %     if(max(test_info.CellTemperatures(:,t_idx)) > test_info.BMSino.MAX_CELL_TEMPERATURE)
 %         test_error.high_cell_temperature = max(test_info.CellTemperatures(:,t_idx));
@@ -231,7 +238,8 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 %     end
     if(max(test_info.BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
         test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
-    else test_error.high_BMS_temperature = NaN;
+    else
+        test_error.high_BMS_temperature = NaN;
     end
     
     % check for errors. If not, execute the test.
@@ -246,7 +254,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % compute balancing mask
         toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
         for i=1:test_info.CELLS_NUMBER
-            if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
+            if test_info.CellVoltage(i, t_idx) >= mV_START_TO_BALANCE
                 % it's time to balance the i-th cell!
                 toWriteCellBalancingStatus(1,i) = 1;
             else
@@ -258,15 +266,6 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % write balancing mask to BMSino
         test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
 
-       % fprintf('STATE 2 %f \n', toc)
-    %% STATE 3
-    % Estimate current charge setpoint
-        HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
-        ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
-        fprintf('esitimated current setpoint is: %1.3f\n', ChSetPoint);
-        
-       % fprintf('STATE 3 %f\n', toc)
-        
     %% STATE 4
         % check balancing status vector
         test_info.BMSino.getBalancingStatus;
@@ -275,15 +274,6 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
              disp('error during writing of balancing status register');
         end
 
-    %% STATE 5
-    %  Apply the current setpoint already estimated
-        test_info.B3603.getStatus();
-        test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
-        test_info.B3603.setCurrent(ChSetPoint);
-        if(~strcmp(test_info.B3603.DCDCoutputEnabled, 'ON'))
-            test_info.B3603.setOutput(1);
-        end
-%     %fprintf('STATE 4 %f\n', toc)
     
     else %actuate security features: stop all
         % stop charge (open relay)
