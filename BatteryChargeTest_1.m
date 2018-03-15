@@ -215,7 +215,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         
 % Disable all balancing mosfets (it's mandatory to accurately measure the
 % cell voltages)
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0 0 0]);
+    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
     
 % Measure cell temperatures
     test_info.BMSino.getTemperatures();
@@ -291,8 +291,6 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
        % fprintf('STATE 2 %f \n', toc)
     %% STATE 3
     % Estimate current charge setpoint
-        
-%         HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
 
         % we use a filtered version of High Cell Voltage (moving average with window = 2)  
         FilterWindowSize = 2;
@@ -429,7 +427,7 @@ function T1_Stop_Fcn(obj, event, text_arg)
     global test_info
     test_info.B3603.setOutput(0);
     pause(0.01);
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0 0 0]);
+    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
     
     delete(instrfindall);
     disp('in T1_Stop_Fcn function')

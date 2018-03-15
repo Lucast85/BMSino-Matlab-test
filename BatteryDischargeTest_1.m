@@ -220,7 +220,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         
 % Disable all balancing mosfets (it's mandatory to accurately measure the
 % cell voltages)
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0 0 0]);
+    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
     
 % Measure cell temperatures
     test_info.BMSino.getTemperatures();
@@ -412,7 +412,7 @@ function T1_Stop_Fcn(obj, event, text_arg)
     global test_info
     test_info.B3603.setOutput(0);
     pause(0.01);
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0 0 0]);
+    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
     
     delete(instrfindall);
     disp('in T1_Stop_Fcn function')
