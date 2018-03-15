@@ -18,6 +18,7 @@ classdef test_setup < handle % handle class
         time = NaN * ones(1, test_setup.MAX_TEST_TIME);
         BatteryCurrent = NaN * ones(1, test_setup.MAX_TEST_TIME);
         CellVoltage = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
+        CellVoltage_filtered = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
         BatteryVoltage=NaN * ones(1, test_setup.MAX_TEST_TIME);
         CellTemperatures = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
         CellBalancingStatus = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);

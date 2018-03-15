@@ -4,6 +4,24 @@ function [ChSetPoint] = SetPoint_Estimation(Battery, HighestCellVoltage)
 %   Estimate the current setpoint from the highest cell votlage of the
 %   battery pack and from some useful information about the cells used.
 %   Returns value in A, not in mA!!!
+
+
+%% TODO 
+% implementa il seguente filtro:
+%   #if LPF
+%   // Simple LPF to soil moisture sensor: more informations in http://www.edn.com/design/systems-design/4320010/A-simple-software-lowpass-filter-suits-embedded-system-applications
+%   static int32_t filter_reg;  // delay element
+%   int16_t filter_input;       // filter_input
+%   int16_t soilMoistureValue;  // filter output
+%   
+%   filter_input = analogRead(SOIL_MOISTURE_PIN);  //read input
+%   filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + filter_input;  //update filter with current sample
+%   soilMoistureValue = filter_reg >> FILTER_SHIFT;  //scale output for unity gain
+%   #else
+%   uint16_t soilMoistureValue = analogRead(SOIL_MOISTURE_PIN);  //read input
+%   #endif
+
+%% codice originale
     DeltaVoltage = 0;
     DeltaVoltageMax = 0;
     ChSetPoint=0;

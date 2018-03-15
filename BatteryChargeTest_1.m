@@ -291,7 +291,16 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
        % fprintf('STATE 2 %f \n', toc)
     %% STATE 3
     % Estimate current charge setpoint
-        HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
+        
+%         HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
+
+        % we use a filtered version of High Cell Voltage (moving average with window = 2)  
+        FilterWindowSize = 2;
+        b = (1/FilterWindowSize) * ones(1,FilterWindowSize);
+        a = 1;
+        test_info.CellVoltage_filtered = filter(b,a,test_info.CellVoltage,[],2);
+        HighestCellVoltage = max(test_info.CellVoltage_filtered(:, t_idx));
+        % set charge setpoint
         ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
         fprintf('esitimated current setpoint is: %1.3f\n', ChSetPoint);
         

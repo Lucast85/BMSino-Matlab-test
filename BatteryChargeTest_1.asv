@@ -2,12 +2,9 @@ close all
 clear all
 clc
 
-
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 global test_info
-global mv_CELLS_SETPOINT;
-mv_CELLS_SETPOINT = [3915 3810 3900 3826 3820 3815];
 test_info = test_setup();
 
 %% Figure, axes and animated lines
@@ -61,7 +58,7 @@ hAnimLinesCV.CellVoltage6 = animatedline('Color',C6col,'Marker',C6mrk,'LineStyle
 hAnimLinesCV.CellVoltage_h_limit = animatedline('Color',[0.5 0.5 0.5],'LineStyle',':');
 hAnimLinesCV.CellVoltage_l_limit = animatedline('Color',[0.5 0.5 0.5],'LineStyle',':');
 legend('Cell 1','Cell 2','Cell 3',...
-    'Cell 4','Cell 5','Cell 6');
+    'Cell 4','Cell 5','Cell 6','Location', 'southwest');
 
 % % plot the limits
 % plot([1 test_info.MAX_TEST_TIME],... % x
@@ -157,12 +154,12 @@ ax_BS.YLabel.String = 'Battery current [A]';
 hAnimLinesBS.BatteryCurrent = animatedline('Color','r');
 yyaxis left
 % data
-hAnimLinesBS.CellBalSts1 = animatedline('Color',C1col);
-hAnimLinesBS.CellBalSts2 = animatedline('Color',C2col);
-hAnimLinesBS.CellBalSts3 = animatedline('Color',C3col);
-hAnimLinesBS.CellBalSts4 = animatedline('Color',C4col);
-hAnimLinesBS.CellBalSts5 = animatedline('Color',C5col);
-hAnimLinesBS.CellBalSts6 = animatedline('Color',C6col);
+hAnimLinesBS.CellBalSts1 = animatedline('Color',C1col,'Marker',C1mrk,'LineStyle',C1ls);
+hAnimLinesBS.CellBalSts2 = animatedline('Color',C2col,'Marker',C2mrk,'LineStyle',C2ls);
+hAnimLinesBS.CellBalSts3 = animatedline('Color',C3col,'Marker',C3mrk,'LineStyle',C3ls);
+hAnimLinesBS.CellBalSts4 = animatedline('Color',C4col,'Marker',C4mrk,'LineStyle',C4ls);
+hAnimLinesBS.CellBalSts5 = animatedline('Color',C5col,'Marker',C5mrk,'LineStyle',C5ls);
+hAnimLinesBS.CellBalSts6 = animatedline('Color',C6col,'Marker',C6mrk,'LineStyle',C6ls);
 % limits
 hAnimLinesBS.CellBalSts1_stby = animatedline('Color',C1col,'LineStyle',':');
 hAnimLinesBS.CellBalSts2_stby = animatedline('Color',C2col,'LineStyle',':');
@@ -173,7 +170,7 @@ hAnimLinesBS.CellBalSts6_stby = animatedline('Color',C6col,'LineStyle',':');
 
 ylim([0.8 6.99])
 legend('Cell 1','Cell 2','Cell 3',...
-    'Cell 4','Cell 5','Cell 6');
+    'Cell 4','Cell 5','Cell 6','Location', 'southwest');
 
 %% Define the timer object
 % specifies the properties of the timer object
@@ -195,8 +192,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 % T1_trig_Fcn
 
     global test_info;
-    global mv_CELLS_SETPOINT;
-
+      
     % static variable. t_idx is the number of times the trigger function is
     % called
     persistent t_idx
@@ -245,18 +241,15 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     % update error structure
     if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE)
         test_error.high_cell_voltage = max(test_info.CellVoltage(:, t_idx));
-    else
-        test_error.high_cell_voltage = NaN;
+    else test_error.high_cell_voltage = NaN;
     end
     if(min(test_info.CellVoltage(:, t_idx)) < test_info.BMSino.MIN_CELL_VOLTAGE)
         test_error.low_cell_voltage = min(test_info.CellVoltage(:, t_idx));
-    else
-        test_error.low_cell_voltage = NaN;
+    else test_error.low_cell_voltage = NaN;
     end
     if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.MAX_CH_CURRENT)
         test_error.high_battery_current = max(test_info.BatteryCurrent(t_idx));
-    else
-        test_error.high_battery_current = NaN;
+    else test_error.high_battery_current = NaN;
     end
 %     if(max(test_info.CellTemperatures(:,t_idx)) > test_info.BMSino.MAX_CELL_TEMPERATURE)
 %         test_error.high_cell_temperature = max(test_info.CellTemperatures(:,t_idx));
@@ -268,8 +261,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 %     end
     if(max(test_info.BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
         test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
-    else
-        test_error.high_BMS_temperature = NaN;
+    else test_error.high_BMS_temperature = NaN;
     end
     
     % check for errors. If not, execute the test.
@@ -284,7 +276,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % compute balancing mask
         toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
         for i=1:test_info.CELLS_NUMBER
-            if test_info.CellVoltage(i, t_idx) >= mv_CELLS_SETPOINT(i)
+            if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
                 % it's time to balance the i-th cell!
                 toWriteCellBalancingStatus(1,i) = 1;
             else
@@ -296,6 +288,24 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         % write balancing mask to BMSino
         test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
 
+       % fprintf('STATE 2 %f \n', toc)
+    %% STATE 3
+    % Estimate current charge setpoint
+        
+%         HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
+
+        % we use a filtered version of High Cell Voltage  
+        FilterWindowSize = 2;
+        b = (1/FilterWindowSize) * ones(1,FilterWindowSize);
+        a = 1;
+        test_info.CellVoltage_filtered = filter(b,a,x,[],2);
+        HighestCellVoltage = max(test_info.CellVoltage_filtered(:, t_idx));
+        % set 
+        ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
+        fprintf('esitimated current setpoint is: %1.3f\n', ChSetPoint);
+        
+       % fprintf('STATE 3 %f\n', toc)
+        
     %% STATE 4
         % check balancing status vector
         test_info.BMSino.getBalancingStatus;
@@ -303,7 +313,15 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
              disp('error during writing of balancing status register');
         end
-
+    %% STATE 5
+    %  Apply the current setpoint already estimated
+        test_info.B3603.getStatus();
+        test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
+        test_info.B3603.setCurrent(ChSetPoint);
+        if(~strcmp(test_info.B3603.DCDCoutputEnabled, 'ON'))
+            test_info.B3603.setOutput(1);
+        end
+%     %fprintf('STATE 4 %f\n', toc)
     
     else %actuate security features: stop all
         % stop charge (open relay)
