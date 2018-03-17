@@ -4,12 +4,11 @@ classdef test_setup < handle % handle class
     
     properties( Constant = true )
         DCDC_SERIALPORT = 'COM2'    % COM port 
-        BMSINO_SERIALPORT = 'COM3'  % COM port 
+        BMSINO_SERIALPORT = 'COM5'  % COM port 
         BMSINO_BAUDRATE = 115200    % bps
         DCDC_BAUDRATE = 38400       % bps
-        MAX_TEST_TIME = 7200;       % seconds
+        MAX_TEST_TIME = 18000;      % seconds (5 hours)
         CELLS_NUMBER = 6;           % possible only 4, 5 or 6 cells each BMSino
-        
     end
     
     properties 
@@ -23,6 +22,14 @@ classdef test_setup < handle % handle class
         CellTemperatures = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
         CellBalancingStatus = NaN * ones(test_setup.CELLS_NUMBER, test_setup.MAX_TEST_TIME);
         BMSTemperature = NaN * ones(1, test_setup.MAX_TEST_TIME);
+        StoredCharge = NaN * ones(1, test_setup.MAX_TEST_TIME);
+        prev_voltages_value;
+        total_lost_charge = 0;
+        prev_current_SetPoint;
+        prev_current_time = 0;
+        start_current_time = 0;
+        start_current_SetPoint = 0;
+        
     end
     
     methods

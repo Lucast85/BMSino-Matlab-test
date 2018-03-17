@@ -7,7 +7,8 @@ clc
 delete(instrfindall);
 global test_info
 global mv_CELLS_SETPOINT;
-mv_CELLS_SETPOINT = [3915 3810 3900 3826 3820 3815];
+mv_CELLS_SETPOINT = [4200 4200 4200 4200 3600 4200];
+% [3915 3810 3900 3826 3820 3815];
 test_info = test_setup();
 
 %% Figure, axes and animated lines
@@ -298,12 +299,12 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
         test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
 
     %% STATE 4
-        % check balancing status vector
-        test_info.BMSino.getBalancingStatus;
-        test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
-        if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
-             disp('error during writing of balancing status register');
-        end
+%         % check balancing status vector
+%         test_info.BMSino.getBalancingStatus;
+%         test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
+%         if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
+%              disp('error during writing of balancing status register');
+%         end
 
     
     else %actuate security features: stop all

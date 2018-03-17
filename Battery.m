@@ -19,6 +19,7 @@ classdef Battery < handle % handle class
       MAX_BMS_TEMPERATURE                   = 75    % °C
       MANUFACTURER                          = 'Panasonic'
       PART_NUMBER                           = 'NCR18650B'
+      DELTA_VOLTAGE_EOC                     = 5      % mV
       NOTE = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
    end
    

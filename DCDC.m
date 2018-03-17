@@ -60,7 +60,7 @@ classdef DCDC < handle % handle class
                 string = strcat('VOLTAGE',32, num2str(obj.MAX_DCDC_VOLTAGE,'%1.3f\n'));
                 fprintf(obj.SerialObj, string);
                 disp('Max DCDC Voltage set');
-               
+                pause(0.01);
                 
 
                 
@@ -76,10 +76,11 @@ classdef DCDC < handle % handle class
        end
        
        % Set Voltage
-       function setVoltage(obj, voltage)
+       function setVoltage(obj, voltage)            
             string = strcat('VOLTAGE',32, num2str(voltage,'%1.3f\n'));
             fprintf(obj.SerialObj, string);
             disp('Voltage set')
+            pause(0.01);
             flushinput(obj.SerialObj);
        end
        % Set Current
@@ -98,6 +99,7 @@ classdef DCDC < handle % handle class
                 fprintf(obj.SerialObj, string);
             end
             disp('Current set')
+            pause(0.01);
             flushinput(obj.SerialObj);
        end
        % Set Output (0=off, 1=on)
@@ -105,6 +107,7 @@ classdef DCDC < handle % handle class
             string = strcat('OUTPUT',32, int2str(sts));
             fprintf(obj.SerialObj, string);
             disp('Output set')
+            pause(0.01);
             flushinput(obj.SerialObj);
             flushoutput(obj.SerialObj);
        end
@@ -112,6 +115,7 @@ classdef DCDC < handle % handle class
        function setAutocommit(obj)
             fprintf(obj.SerialObj, 'AUTOCOMMIT');
             disp('autocommit set')
+            pause(0.01);
             flushinput(obj.SerialObj);
        end
        % Set DC-DC converter Name
@@ -119,6 +123,7 @@ classdef DCDC < handle % handle class
             string = strcat('SNAME',32, name);
             fprintf(obj.SerialObj, string);
             disp('DCDC name set')
+            pause(0.01);
             flushinput(obj.SerialObj);
        end
        
