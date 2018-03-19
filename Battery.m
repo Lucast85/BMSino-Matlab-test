@@ -13,13 +13,14 @@ classdef Battery < handle % handle class
       MIN_CELL_VOLTAGE                      = 2500  % mV  
       CELL_VOLTAGE_START_SP_CH_REDUCTION    = 4000  % mV
       CELL_VOLTAGE_START_BALANCING          = 4000  % mV
-      DELTA_VOLTAGE_END_OF_BALANCING        = 30    % mV
+      DELTA_VOLTAGE_EOB                     = 30    % mV
       MAX_CELL_TEMPERATURE                  = 40    % °C
       MIN_CELL_TEMPERATURE                  = 0     % °C
       MAX_BMS_TEMPERATURE                   = 75    % °C
       MANUFACTURER                          = 'Panasonic'
       PART_NUMBER                           = 'NCR18650B'
       DELTA_VOLTAGE_EOC                     = 5      % mV
+      R_BAL                                 = 10     %ohm
       NOTE = '6s1p battery made with 18650 lithium cells. This battery is used to test BMSino'
    end
    
@@ -35,6 +36,8 @@ classdef Battery < handle % handle class
       BatteryFullyCharged           = NaN
       StateOfCharge                 = NaN   % not yet implemented
       StateOfHealth                 = NaN   % not yet implemented
+      R_INT = NaN*ones(6,1) .* 38           %mOhm
+      
       SerialObj
    end
    

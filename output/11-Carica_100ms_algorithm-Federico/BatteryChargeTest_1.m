@@ -2,12 +2,9 @@ close all
 clear all
 clc
 
-
 %% Define BMSino and DC/DC objects
 delete(instrfindall);
 global test_info
-global mv_CELLS_SETPOINT;
-mv_CELLS_SETPOINT = [3115 3900 3900 3900 3950 3915];
 test_info = test_setup();
 
 %% Figure, axes and animated lines
@@ -43,7 +40,7 @@ ax_CV.XGrid = 'on';
 ax_CV.XLabel.String = 'Time [s]';
 yyaxis left
 ax_CV.YColor = 'black';
-ax_CV.YLabel.String = 'Cell voltage [mV]';
+ax_CV.YLabel.String = 'Cell voltage [V]';
 yyaxis right
 ax_CV.YColor = 'red';
 ax_CV.YLabel.String = 'Battery current [A]';
@@ -189,15 +186,18 @@ t = timer('StartDelay', 0, 'Period', 1, 'TasksToExecute', inf,...
           'StopFcn',@T1_Stop_Fcn,...
           'ErrorFcn',@T1_Err_Fcn);
 
+      
+      
+
+
 %% Timer trigger
-function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
+function T1_Trig_Fcn(~, ~, hAnimLinesCV,...
                 ...hAnimLinesCT,...
                 hAnimLinesBMST, hAnimLinesBS)
 % T1_trig_Fcn
 
     global test_info;
-    global mv_CELLS_SETPOINT;
-
+      
     % static variable. t_idx is the number of times the trigger function is
     % called
     persistent t_idx
@@ -217,7 +217,15 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 %% STATE 1
     % Save actual time
     test_info.time(t_idx) = round(toc,1);
+
+    
+%reset balancing starting time after error
+    if (test_info.start_bal_time == -1)
+        test_info.start_bal_time = toc;
+    end
         
+    %record total balaning time at previous iteration
+    test_info.prev_bal_time = toc - test_info.start_bal_time;
 % Disable all balancing mosfets (it's mandatory to accurately measure the
 % cell voltages)
     test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
@@ -234,12 +242,18 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     %test_info.B3603.getStatus();
 %     test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
 %     % test_info.BMSino.getCurrent(); %does not work now!
+
+% Register old voltage value:
+    test_info.prev_voltages_value(:) = test_info.CellVoltage(:,t_idx- 1);
     
 % Finally wait 50 ms, measure cell voltages and compute battery voltage
-    pause(0.05);
     test_info.BMSino.getVoltages();
     test_info.CellVoltage(:, t_idx) = test_info.BMSino.CellsVoltages(:);
     test_info.BatteryVoltage(t_idx) = test_info.BMSino.TotalVoltage;
+    
+% Calculate voltage drop on all cell from previous cycle
+    %prev_voltages_drop = prev_voltages_value - test_info.BMSino.CellsVoltages(:) ;
+    
     
    
 %% SECURITY CONTROL
@@ -268,7 +282,7 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
 %     else test_error.low_cell_temperature = NaN;
 %     end
     if(max(test_info.BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
-        test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
+        test_error.high_BMS_temperature = test_info.BMSTemperature(t_idx);
     else
         test_error.high_BMS_temperature = NaN;
     end
@@ -283,42 +297,170 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     %% STATE 2
     % Compute & apply balancing mask
         % compute balancing mask
-        toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
+        toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);            
+		balance_flag = 0;
         for i=1:test_info.CELLS_NUMBER
-            if test_info.CellVoltage(i, t_idx) >= mv_CELLS_SETPOINT(i)
-                % it's time to balance the i-th cell!
-                toWriteCellBalancingStatus(1,i) = 1;
+            if test_info.CellVoltage(i, t_idx) < (max(test_info.CellVoltage(:, t_idx)) - test_info.BMSino.DELTA_VOLTAGE_EOB)
+                test_bal = 0;
             else
-                % switch off the balancing mosfet on i-th cell
-                toWriteCellBalancingStatus(1,i) = 0;
+                test_bal = 1;
+                if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.CELL_VOLTAGE_START_BALANCING
+                    % it's time to balance the i-th cell!
+                    toWriteCellBalancingStatus(1,i) = 1 & test_bal;
+                else
+                    % switch off the balancing mosfet on i-th cell
+                    toWriteCellBalancingStatus(1,i) = 0;
+                end
             end
-        end
 
+        end
+        
+%             if toWriteCellBalancingStatus(1,:) == [1 1 1 1 1 1]
+%                 % control if all are at the same voltage, don't balance
+%                 toWriteCellBalancingStatus = [0 0 0 0 0 0];
+%                 balance_flag = 1;
+%             end
+%                    
+%             if  (max(test_info.CellVoltage(:, t_idx)) - min(test_info.CellVoltage(:, t_idx))) <  (test_info.BMSino.DELTA_VOLTAGE_EOB + 10 && (balance_flag ==1))
+%                 % control if all are at the same voltage, don't balance
+%                 toWriteCellBalancingStatus = [0 0 0 0 0 0];            
+%             end
+%             
+            test_all_status = zeros(1,6);
+            if (t_idx > (test_info.test_balance_window+2))
+                for k=1:(test_info.test_balance_window)
+                test_all_status = test_all_status | test_info.CellBalancingStatus(:,t_idx - k);
+                end
+            end
+            
+            if (test_all_status == [1 1 1 1 1 1])
+                toWriteCellBalancingStatus = [0 0 0 0 0 0];
+            end
+                
+                
+            
+            
+        
         % write balancing mask to BMSino
         test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
+        
+        %record initial balancing time for next iteration
+        test_info.start_bal_time = toc;
+        
+       % fprintf('STATE 2 %f \n', toc)
+    %% STATE 3
+    % Estimate current charge setpoint
+        
+%         HighestCellVoltage = max(test_info.CellVoltage(:, t_idx));
 
+        % we use a filtered version of High Cell Voltage (moving average with window = 2)  
+        FilterWindowSize = 8;
+        b = (1/FilterWindowSize) * ones(1,FilterWindowSize);
+        a = 1;
+        test_info.CellVoltage_filtered = filter(b,a,test_info.CellVoltage,[],2);
+        HighestCellVoltage = max(test_info.CellVoltage_filtered(:, t_idx));
+        % set charge setpoint
+        ChSetPoint = SetPoint_Estimation(test_info.BMSino, HighestCellVoltage);
+        fprintf('esitimated current setpoint is: %1.3f\n', ChSetPoint);       
+        
+        
+       % fprintf('STATE 3 %f\n', toc)
+        
     %% STATE 4
         % check balancing status vector
         test_info.BMSino.getBalancingStatus;
         test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
-        if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
+        if ~isequal((test_info.CellBalancingStatus(:, t_idx)'), toWriteCellBalancingStatus)
              disp('error during writing of balancing status register');
         end
+    %% STATE 5
+    %  Apply the current setpoint already estimated
+        test_info.B3603.getStatus();
+        test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
+        test_info.B3603.setCurrent(ChSetPoint);
+        
+
+        
+        test_info.prev_current_time = toc - test_info.start_current_time;           %calculate time interval with previous current
+        test_info.prev_current_SetPoint = test_info.start_current_SetPoint;         %remember previous current value
+               
+        if(~strcmp(test_info.B3603.DCDCoutputEnabled, 'ON'))
+            test_info.B3603.setOutput(1);
+        end
+    %     %fprintf('STATE 4 %f\n', toc)
+        test_info.start_current_time = toc;                                %update initial time with this current value
+        test_info.start_current_SetPoint = ChSetPoint;                    %update initial current value
+    
+    
+    %% STATE 6
+    %  Calculate charge stored in previous iteration
+    
+        
+%         test_info.cell_lost_current = (test_info.prev_voltages_value- 40) ...
+%                                        .*(test_info.CellBalancingStatus(:,t_idx-1))  ...                            
+%                                        ./10;                
+%                                        %calculate lost charge during balancing in mA*s        
+%     
+%                                         
+%         if (isnan(test_info.StoredCharge(1,t_idx-1)))
+%         test_info.StoredCharge(1,t_idx-1) = 0;
+%         end
+%         test_info.StoredCharge(1,t_idx) = sum( test_info.prev_current_SetPoint/1000*(1-test_info.prev_bal_time)...
+%                                         + (test_info.prev_current_SetPoint/1000- test_info.cell_lost_current)*test_info.prev_bal_time );
+%                                         
+%                                       
+%                                       
+%                                     %test_info.StoredCharge(1,t_idx-1)+...
+    
+                        
 
     
     else %actuate security features: stop all
-        % stop charge (open relay)
-        test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
+        % control if only overvoltage error is present
+        
+        if(~isnan(test_error.high_cell_voltage) &&...
+            isnan(test_error.low_cell_voltage) &&...
+            isnan(test_error.high_battery_current) &&...
+            isnan(test_error.high_cell_temperature) &&...
+            isnan(test_error.low_cell_temperature) &&...
+            isnan(test_error.high_BMS_temperature))
+            
         % stop balancing
-        test_info.B3603.setOutput(0);
-        
-        
-        test_info.B3603.getStatus();
-        disp(test_info.B3603.DCDCoutputEnabled)
-        if(strcmp(test_info.B3603.DCDCoutputEnabled, 'OFF'))
-        fprintf('CHARGING DISABLED\n')
+            pause(0.01);
+            test_info.B3603.setOutput(0);
+            
+        % balancing only cells with overvoltage      
+            toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
+            for i=1:test_info.CELLS_NUMBER
+                if test_info.CellVoltage(i, t_idx) >= test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE
+                    % it's time to balance the i-th cell!
+                    toWriteCellBalancingStatus(1,i) = 1;
+                else
+                    % switch off the balancing mosfet on i-th cell
+                    toWriteCellBalancingStatus(1,i) = 0;
+                end
+            end
+
+        % write balancing mask to BMSino
+        test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
+            
+        %stop balancing and chargin in any other error case
+        else
+		
+            test_info.B3603.setOutput(0);
+            pause(0.01);
+            test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
+            test_info.start_bal_time = -1;
+            pause(0.01);
+
+            test_info.B3603.getStatus();
+            disp(test_info.B3603.DCDCoutputEnabled)
+            if(strcmp(test_info.B3603.DCDCoutputEnabled, 'OFF'))
+            fprintf('CHARGING DISABLED\n')
+            end
+
         end
-        
+
         %update Battery Current value
         test_info.time(t_idx) = round(toc,1);
         test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;        
@@ -395,19 +537,19 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     %fprintf('STATE 6 %f\n', toc)
 end
 %% Timer Error
-function T1_Err_Fcn(obj, event, text_arg)
+function T1_Err_Fcn(~, ~, ~)
 % T1_Err_Fcn
     delete(instrfindall);
     disp('in T1_Err_Fcn function')
 end
 %% Timer Start
-function T1_Start_Fcn(obj, event, text_arg)
+function T1_Start_Fcn(~, ~, ~)
 % T1_Start_Fcn
     disp('Initialization of instruments');
     tic % start stopwatch timer
 end
 %% Timer Stop
-function T1_Stop_Fcn(obj, event, text_arg)
+function T1_Stop_Fcn(~, ~, ~)
 % T1_Stop_Fcn
     global test_info
     test_info.B3603.setOutput(0);
@@ -418,5 +560,15 @@ function T1_Stop_Fcn(obj, event, text_arg)
     disp('in T1_Stop_Fcn function')
     disp('Total running time is: ')
     disp(round(toc,1))
+    
+        csvwrite('acquisition.csv', [...
+        test_info.time;...
+        test_info.BatteryCurrent; ...
+        test_info.CellVoltage;...
+        test_info.CellVoltage_filtered;...
+        test_info.BatteryVoltage;...
+        test_info.CellBalancingStatus;...
+        test_info.BMSTemperature]);
+    
 end
 

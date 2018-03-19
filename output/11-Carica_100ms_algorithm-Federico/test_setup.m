@@ -3,11 +3,11 @@ classdef test_setup < handle % handle class
     %   ...
     
     properties( Constant = true )
-        DCDC_SERIALPORT = 'COM2'    % COM port 
-        BMSINO_SERIALPORT = 'COM5'  % COM port 
+        DCDC_SERIALPORT = 'COM5'    % COM port 
+        BMSINO_SERIALPORT = 'COM7'  % COM port 
         BMSINO_BAUDRATE = 115200    % bps
         DCDC_BAUDRATE = 38400       % bps
-        MAX_TEST_TIME = 14400;      % seconds
+        MAX_TEST_TIME = 7200;       % seconds
         CELLS_NUMBER = 6;           % possible only 4, 5 or 6 cells each BMSino
         
     end

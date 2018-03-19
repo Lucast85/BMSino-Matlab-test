@@ -1,14 +1,9 @@
-close all
-clear all
-clc
+clc;
+clear all;
+close all;
 
 
-%% Define BMSino and DC/DC objects
-delete(instrfindall);
-global test_info
-global mv_CELLS_SETPOINT;
-mv_CELLS_SETPOINT = [3115 3900 3900 3900 3950 3915];
-test_info = test_setup();
+len = 4502;
 
 %% Figure, axes and animated lines
 
@@ -43,7 +38,7 @@ ax_CV.XGrid = 'on';
 ax_CV.XLabel.String = 'Time [s]';
 yyaxis left
 ax_CV.YColor = 'black';
-ax_CV.YLabel.String = 'Cell voltage [mV]';
+ax_CV.YLabel.String = 'Cell voltage [V]';
 yyaxis right
 ax_CV.YColor = 'red';
 ax_CV.YLabel.String = 'Battery current [A]';
@@ -175,188 +170,20 @@ ylim([0.8 6.99])
 legend('Cell 1','Cell 2','Cell 3',...
     'Cell 4','Cell 5','Cell 6','Location', 'southwest');
 
-
-%% Define the timer object
-% specifies the properties of the timer object
-t = timer('StartDelay', 0, 'Period', 1, 'TasksToExecute', inf,...
-          'ExecutionMode', 'fixedRate',...
-          'StartFcn', @T1_Start_Fcn,...
-          'TimerFcn',{@T1_Trig_Fcn,...
-                    hAnimLinesCV,...
-                 ...%hAnimLinesCT,...
-                    hAnimLinesBMST,...
-                    hAnimLinesBS},...
-          'StopFcn',@T1_Stop_Fcn,...
-          'ErrorFcn',@T1_Err_Fcn);
-
-%% Timer trigger
-function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
-                ...hAnimLinesCT,...
-                hAnimLinesBMST, hAnimLinesBS)
-% T1_trig_Fcn
-
-    global test_info;
-    global mv_CELLS_SETPOINT;
-
-    % static variable. t_idx is the number of times the trigger function is
-    % called
-    persistent t_idx
-    if isempty(t_idx)
-        t_idx = 0;
-    end
-    t_idx = t_idx + 1;
-    
-    % Initialize errors
-    test_error.high_cell_voltage = NaN;
-    test_error.low_cell_voltage = NaN;
-    test_error.high_battery_current = NaN;
-    test_error.high_cell_temperature = NaN;
-    test_error.low_cell_temperature = NaN;
-    test_error.high_BMS_temperature = NaN;
-    
-%% STATE 1
-    % Save actual time
-    test_info.time(t_idx) = round(toc,1);
-        
-% Disable all balancing mosfets (it's mandatory to accurately measure the
-% cell voltages)
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
-    
-% Measure cell temperatures
-    test_info.BMSino.getTemperatures();
-    test_info.CellTemperatures(:,t_idx) = test_info.BMSino.CellsTemperatures(:);
-    
-% Measure BMS temperature
-    test_info.BMSino.getBMSTemperature();	
-    test_info.BMSTemperature(t_idx) = test_info.BMSino.BMSTemperature;
-
-% Measure battery current
-    %test_info.B3603.getStatus();
-%     test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;
-%     % test_info.BMSino.getCurrent(); %does not work now!
-    
-% Finally wait 50 ms, measure cell voltages and compute battery voltage
-    pause(0.05);
-    test_info.BMSino.getVoltages();
-    test_info.CellVoltage(:, t_idx) = test_info.BMSino.CellsVoltages(:);
-    test_info.BatteryVoltage(t_idx) = test_info.BMSino.TotalVoltage;
-    
-   
-%% SECURITY CONTROL
-    % update error structure
-    if(max(test_info.CellVoltage(:, t_idx)) > test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE)
-        test_error.high_cell_voltage = max(test_info.CellVoltage(:, t_idx));
-    else
-        test_error.high_cell_voltage = NaN;
-    end
-    if(min(test_info.CellVoltage(:, t_idx)) < test_info.BMSino.MIN_CELL_VOLTAGE)
-        test_error.low_cell_voltage = min(test_info.CellVoltage(:, t_idx));
-    else
-        test_error.low_cell_voltage = NaN;
-    end
-    if(max(test_info.BatteryCurrent(t_idx)) > test_info.BMSino.MAX_CH_CURRENT)
-        test_error.high_battery_current = max(test_info.BatteryCurrent(t_idx));
-    else
-        test_error.high_battery_current = NaN;
-    end
-%     if(max(test_info.CellTemperatures(:,t_idx)) > test_info.BMSino.MAX_CELL_TEMPERATURE)
-%         test_error.high_cell_temperature = max(test_info.CellTemperatures(:,t_idx));
-%     else test_error.high_cell_temperature = NaN;
-%     end
-%     if(min(test_info.CellTemperatures(:,t_idx)) < test_info.BMSino.MIN_CELL_TEMPERATURE)
-%         test_error.low_cell_temperature = min(test_info.CellTemperatures(:,t_idx));
-%     else test_error.low_cell_temperature = NaN;
-%     end
-    if(max(test_info.BMSTemperature(t_idx)) > test_info.BMSino.MAX_BMS_TEMPERATURE)
-        test_error.high_BMS_temperature = max(BMSTemperature(t_idx));
-    else
-        test_error.high_BMS_temperature = NaN;
-    end
-    
-    % check for errors. If not, execute the test.
-    if(isnan(test_error.high_cell_voltage) &&...
-        isnan(test_error.low_cell_voltage) &&...
-        isnan(test_error.high_battery_current) &&...
-        isnan(test_error.high_cell_temperature) &&...
-        isnan(test_error.low_cell_temperature) &&...
-        isnan(test_error.high_BMS_temperature))
-    %% STATE 2
-    % Compute & apply balancing mask
-        % compute balancing mask
-        toWriteCellBalancingStatus = zeros(1,test_info.CELLS_NUMBER);
-        for i=1:test_info.CELLS_NUMBER
-            if test_info.CellVoltage(i, t_idx) >= mv_CELLS_SETPOINT(i)
-                % it's time to balance the i-th cell!
-                toWriteCellBalancingStatus(1,i) = 1;
-            else
-                % switch off the balancing mosfet on i-th cell
-                toWriteCellBalancingStatus(1,i) = 0;
-            end
-        end
-
-        % write balancing mask to BMSino
-        test_info.BMSino.setBalancingStatus(toWriteCellBalancingStatus(1,:));
-
-    %% STATE 4
-        % check balancing status vector
-        test_info.BMSino.getBalancingStatus;
-        test_info.CellBalancingStatus(:, t_idx) = test_info.BMSino.CellsBalancingStatus;
-        if ~isequal(test_info.CellBalancingStatus(:, t_idx), toWriteCellBalancingStatus)
-             disp('error during writing of balancing status register');
-        end
-
-    
-    else %actuate security features: stop all
-        % stop charge (open relay)
-        test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
-        % stop balancing
-        test_info.B3603.setOutput(0);
-        
-        
-        test_info.B3603.getStatus();
-        disp(test_info.B3603.DCDCoutputEnabled)
-        if(strcmp(test_info.B3603.DCDCoutputEnabled, 'OFF'))
-        fprintf('CHARGING DISABLED\n')
-        end
-        
-        %update Battery Current value
-        test_info.time(t_idx) = round(toc,1);
-        test_info.BatteryCurrent(t_idx) = test_info.B3603.DCDCoutputCurrent;        
-        
-        
-        % Display error message!
-        if(isnan(test_error.high_cell_voltage) == 0)
-            fprintf('too high cell voltage (%1.3f)\n', test_error.high_cell_voltage)
-        end
-        if(isnan(test_error.low_cell_voltage) == 0)
-            fprintf('too low cell voltage (%1.3f)\n', test_error.low_cell_voltage)
-        end
-        if(isnan(test_error.high_battery_current) == 0)
-            fprintf('too high battery current (%1.3f)\n', test_error.high_battery_current)
-        end
-        if(isnan(test_error.high_cell_temperature) == 0)
-            fprintf('too high cell temperature (%3.1f)\n', test_error.high_cell_temperature)
-        end
-        if(isnan(test_error.low_cell_temperature) == 0)
-            fprintf('too low cell temperature (%3.1f)\n', test_error.low_cell_temperature)
-        end
-        if(isnan(test_error.high_BMS_temperature) == 0)
-            fprintf('too high BMS temperature (%3.1f)\n', test_error.high_BMS_temperature)
-        end 
-    end
-%% STATE 6
+for t_idx=1:len
+    %% STATE 6
 % plot all values in real-time
 
     % Plot in real time the cells values
     % Cells voltage & limits
-    addpoints(hAnimLinesCV.CellVoltage_h_limit, test_info.time(t_idx), test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE)
-    addpoints(hAnimLinesCV.CellVoltage_l_limit, test_info.time(t_idx), test_info.BMSino.MIN_CELL_VOLTAGE)
-    addpoints(hAnimLinesCV.CellVoltage1, test_info.time(t_idx), test_info.CellVoltage(1,t_idx))
-    addpoints(hAnimLinesCV.CellVoltage2, test_info.time(t_idx), test_info.CellVoltage(2,t_idx))
-    addpoints(hAnimLinesCV.CellVoltage3, test_info.time(t_idx), test_info.CellVoltage(3,t_idx))
-    addpoints(hAnimLinesCV.CellVoltage4, test_info.time(t_idx), test_info.CellVoltage(4,t_idx))
-    addpoints(hAnimLinesCV.CellVoltage5, test_info.time(t_idx), test_info.CellVoltage(5,t_idx))
-    addpoints(hAnimLinesCV.CellVoltage6, test_info.time(t_idx), test_info.CellVoltage(6,t_idx))
+    addpoints(hAnimLinesCV.CellVoltage_h_limit, test_info.time(t_idx), test_info.BMSino.MAX_SECURITY_CELL_VOLTAGE/1000)
+    %addpoints(hAnimLinesCV.CellVoltage_l_limit, test_info.time(t_idx), test_info.BMSino.MIN_CELL_VOLTAGE)
+    addpoints(hAnimLinesCV.CellVoltage1, test_info.time(t_idx), test_info.CellVoltage(1,t_idx)/1000)
+    addpoints(hAnimLinesCV.CellVoltage2, test_info.time(t_idx), test_info.CellVoltage(2,t_idx)/1000)
+    addpoints(hAnimLinesCV.CellVoltage3, test_info.time(t_idx), test_info.CellVoltage(3,t_idx)/1000)
+    addpoints(hAnimLinesCV.CellVoltage4, test_info.time(t_idx), test_info.CellVoltage(4,t_idx)/1000)
+    addpoints(hAnimLinesCV.CellVoltage5, test_info.time(t_idx), test_info.CellVoltage(5,t_idx)/1000)
+    addpoints(hAnimLinesCV.CellVoltage6, test_info.time(t_idx), test_info.CellVoltage(6,t_idx)/1000)
     
     % Cells balancing status & limits
     addpoints(hAnimLinesBS.CellBalSts1, test_info.time(t_idx), test_info.CellBalancingStatus(1,t_idx)*0.8+1)
@@ -391,32 +218,4 @@ function T1_Trig_Fcn(obj, event, hAnimLinesCV,...
     addpoints(hAnimLinesBS.BatteryCurrent, test_info.time(t_idx), test_info.BatteryCurrent(t_idx))
     % Update axes
     drawnow limitrate
-    
-    %fprintf('STATE 6 %f\n', toc)
 end
-%% Timer Error
-function T1_Err_Fcn(obj, event, text_arg)
-% T1_Err_Fcn
-    delete(instrfindall);
-    disp('in T1_Err_Fcn function')
-end
-%% Timer Start
-function T1_Start_Fcn(obj, event, text_arg)
-% T1_Start_Fcn
-    disp('Initialization of instruments');
-    tic % start stopwatch timer
-end
-%% Timer Stop
-function T1_Stop_Fcn(obj, event, text_arg)
-% T1_Stop_Fcn
-    global test_info
-    test_info.B3603.setOutput(0);
-    pause(0.01);
-    test_info.BMSino.setBalancingStatus([0 0 0 0 0 0]);
-    
-    delete(instrfindall);
-    disp('in T1_Stop_Fcn function')
-    disp('Total running time is: ')
-    disp(round(toc,1))
-end
-
